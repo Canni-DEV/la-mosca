@@ -137,6 +137,18 @@ describe("layoutTable", () => {
       expect(distance(layout.trump, seat.label)).toBeGreaterThan(90);
     }
   });
+
+  it("keeps the five-player stock beside every dealer instead of drifting toward the next seat", () => {
+    for (const dealerId of ["p1", "p2", "p3", "p4", "p5"] as const) {
+      const layout = layoutTable(1920, 940, five, "p1", dealerId);
+      const dealer = layout.seats.find((seat) => seat.id === dealerId)!;
+      const toDealer = distance(layout.deck, dealer.label);
+      expect(toDealer).toBeLessThan(145);
+      for (const seat of layout.seats.filter((item) => item.id !== dealerId)) {
+        expect(distance(layout.deck, seat.label)).toBeGreaterThan(toDealer + 40);
+      }
+    }
+  });
 });
 
 function distance(left: { x: number; y: number }, right: { x: number; y: number }): number {

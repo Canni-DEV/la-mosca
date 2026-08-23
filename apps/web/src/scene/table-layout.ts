@@ -174,25 +174,28 @@ function placeDealerStock(
 ): { deck: Point; trump: Point } {
   const right = dealerRightVector(dealer.angle);
   const inward = { x: -Math.cos(dealer.angle), y: -Math.sin(dealer.angle) };
-  const along = 78 + stockWidth * 0.7;
-  const ontoTable = stockHeight * 0.72;
+  // At 3/9 o'clock, "personal right" walks toward the next seat. Bias those
+  // dealers onto the felt beside the plaque instead of along the rim.
+  const side = Math.abs(Math.cos(dealer.angle));
+  const along = (34 + stockWidth * 0.28) * (1 - 0.62 * side);
+  const ontoTable = 44 + stockHeight * 0.42 + side * 18;
   const rawDeck = {
     x: dealer.label.x + right.x * along + inward.x * ontoTable,
     y: dealer.label.y + right.y * along + inward.y * ontoTable,
   };
   const deck = clampPoint(
-    pullInsideEllipse(rawDeck, center, tableRadiusX * 0.78, tableRadiusY * 0.78),
+    pullInsideEllipse(rawDeck, center, tableRadiusX * 0.88, tableRadiusY * 0.88),
     stockWidth * 0.7,
     stockHeight * 0.7,
     width,
     height,
   );
   const rawTrump = {
-    x: deck.x + right.x * stockWidth * 0.78 + inward.x * stockWidth * 0.16,
-    y: deck.y + right.y * stockWidth * 0.78 + inward.y * stockWidth * 0.16,
+    x: deck.x + right.x * stockWidth * 0.55 + inward.x * stockWidth * 0.22,
+    y: deck.y + right.y * stockWidth * 0.55 + inward.y * stockWidth * 0.22,
   };
   const trump = clampPoint(
-    pullInsideEllipse(rawTrump, center, tableRadiusX * 0.78, tableRadiusY * 0.78),
+    pullInsideEllipse(rawTrump, center, tableRadiusX * 0.88, tableRadiusY * 0.88),
     stockWidth * 0.7,
     stockHeight * 0.7,
     width,

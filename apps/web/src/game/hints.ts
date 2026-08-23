@@ -22,7 +22,7 @@ const HINTS: Record<HintId, Hint> = {
   follow: {
     id: "follow",
     title: "Seguir palo",
-    body: "Si podés, tenés que jugar del palo que salió. Las cartas recomendadas se marcan suave; las otras siguen jugables.",
+    body: "Si podés, tenés que jugar del palo de salida (el recuadro Salida, a la izquierda del triunfo). Las cartas recomendadas se marcan suave; las otras siguen jugables.",
   },
   overtake: {
     id: "overtake",

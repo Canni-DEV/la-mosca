@@ -32,7 +32,8 @@
     <article>
       <h2>Seguir palo y superar</h2>
       <p>
-        Hay que asistir al palo de salida y, si se puede, superar. Sin palo, hay que triunfar si se puede. Todavía podés
+        Hay que asistir al palo de salida y, si se puede, superar. Sin palo, hay que triunfar si se puede. El palo de
+        salida —la primera carta de la baza— aparece a la izquierda del triunfo y cambia en cada vuelta. Todavía podés
         jugar otra carta: eso es palito.
       </p>
     </article>

@@ -3,9 +3,13 @@
   import { paintCardFace, preloadCardArt, suitTitle } from "../scene/card-art.ts";
 
   let {
+    kicker,
+    ariaName,
     suit,
     card,
   }: {
+    kicker: string;
+    ariaName: string;
     suit: Suit | null;
     card: Card | null;
   } = $props();
@@ -22,14 +26,17 @@
       faceSrc = paintCardFace(current).toDataURL("image/png");
     });
   });
+
+  const suitLabel = $derived(suit ? suitTitle(suit) : "—");
+  const ariaLabel = $derived(suit ? `${ariaName} ${suitTitle(suit)}` : `${ariaName} pendiente`);
 </script>
 
-{#if suit}
-  <aside class="trump-reminder" aria-label="Triunfo {suitTitle(suit)}">
-    <p class="trump-reminder-kicker">Triunfo</p>
-    <p class="trump-reminder-suit">{suitTitle(suit)}</p>
+<aside class="suit-plaque" aria-label={ariaLabel}>
+  <p class="suit-plaque-kicker">{kicker}</p>
+  <p class="suit-plaque-suit">{suitLabel}</p>
+  <div class="suit-plaque-slot">
     {#if faceSrc}
-      <img class="trump-reminder-card" src={faceSrc} alt="Carta de triunfo" />
+      <img class="suit-plaque-card" src={faceSrc} alt="Carta de {ariaName}" />
     {/if}
-  </aside>
-{/if}
+  </div>
+</aside>

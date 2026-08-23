@@ -5,7 +5,7 @@
   import ActionBar from "../components/ActionBar.svelte";
   import ContextualHints from "../components/ContextualHints.svelte";
   import GameHud from "../components/GameHud.svelte";
-  import TrumpReminder from "../components/TrumpReminder.svelte";
+  import SuitPlaque from "../components/SuitPlaque.svelte";
   import VictoryScreen from "./VictoryScreen.svelte";
   import { MatchController, unlockAudio } from "../game/match-controller.ts";
   import { HUMAN_PLAYER_ID } from "../game/LocalGameSession.ts";
@@ -79,12 +79,23 @@
   function requestLeave(): void {
     leaving = true;
   }
+
+  const leadSuit = $derived(view?.currentTrick?.leadSuit ?? null);
+  const leadCard = $derived(view?.currentTrick?.plays[0]?.card ?? null);
+  const showLeadPlaque = $derived(view?.phase === "TRICK_PLAY");
 </script>
 
 <section class="table-screen">
   <GameHud {view} onMenu={requestLeave} />
   <div class="table-host" bind:this={host}></div>
-  <TrumpReminder suit={view?.trumpSuit ?? null} card={view?.revealedTrumpCard ?? null} />
+  <div class="suit-reminders">
+    {#if showLeadPlaque}
+      <SuitPlaque kicker="Salida" ariaName="Palo de salida" suit={leadSuit} card={leadCard} />
+    {/if}
+    {#if view?.trumpSuit}
+      <SuitPlaque kicker="Triunfo" ariaName="Triunfo" suit={view.trumpSuit} card={view.revealedTrumpCard ?? null} />
+    {/if}
+  </div>
   <ActionBar
     {view}
     {locked}

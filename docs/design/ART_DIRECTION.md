@@ -106,7 +106,7 @@ Cada asiento debe comunicar:
 
 La identidad del bot puede representarse con nombre y avatar ilustrado simple, pero no es requisito inicial. Si se usan avatares, mantener estilo coherente y no robar protagonismo a las cartas.
 
-## 9. Triunfo
+## 9. Triunfo y palo de salida
 
 El triunfo debe ser visible durante toda la mano.
 
@@ -115,6 +115,8 @@ Opciones combinables:
 - carta revelada colocada cerca del mazo/dealer;
 - pequeño rótulo “Triunfo: Oros”;
 - símbolo del palo integrado al HUD.
+
+El palo de salida de la baza en curso se muestra en un rótulo gemelo a la izquierda del triunfo. Se actualiza con cada vuelta (no con cada mano) y queda vacío hasta que sale la primera carta.
 
 No usar un banner grande permanente.
 

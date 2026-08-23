@@ -124,6 +124,7 @@ Este checklist crece con las fases. La especificación de cada fase incluye un s
 - [ ] Siempre se entiende de quién es el turno.
 - [ ] Las cartas propias son legibles.
 - [ ] El triunfo es visible.
+- [ ] Durante el bazaje, a la izquierda de Triunfo aparece Salida con el palo (y la carta) de la primera jugada; cambia en cada baza.
 - [ ] Scores son legibles.
 - [ ] Animaciones no traban input indefinidamente.
 - [ ] Audio puede mutearse.
