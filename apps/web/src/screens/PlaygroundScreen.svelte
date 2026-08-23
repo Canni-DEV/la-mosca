@@ -4,6 +4,8 @@
   import { LocalGameSession } from "../game/LocalGameSession.ts";
   import { PixiTable } from "../scene/pixi-table.ts";
 
+  let { onBack }: { onBack: () => void } = $props();
+
   const EVENT_LOG_LIMIT = 80;
 
   let seed = $state(2026);
@@ -30,22 +32,22 @@
       eventCount = 0;
       return;
     }
-    const nextDebug = current.engine.getDebugViewState();
-    const log = current.engine.getEventLog();
+    const nextDebug = current.getDebugViewState();
+    const log = current.getEventLog();
     debug = nextDebug;
     eventCount = log.length;
     events = log.slice(-EVENT_LOG_LIMIT).reverse();
-    table.render({
-      phase: nextDebug.phase,
-      trumpSuit: nextDebug.trumpSuit,
-      seed: nextDebug.seed,
-      scores: nextDebug.players.map((player) => ({ name: player.name, score: player.score })),
-    });
+    table.sync(current.getViewState(), { inputLocked: true });
   }
 
   function start(): void {
     unsubscribe?.();
-    session = new LocalGameSession({ seed, playerCount, deckConfiguration });
+    session = new LocalGameSession({
+      seed,
+      playerCount,
+      deckConfiguration,
+      humanPlayerId: null,
+    });
     unsubscribe = session.subscribe(refresh);
     refresh();
   }
@@ -64,46 +66,53 @@
 
   const finished = $derived(debug?.phase === "GAME_OVER");
   const canAct = $derived(session !== null && !finished);
+
+  function onPlayerCount(event: Event): void {
+    const value = Number((event.currentTarget as HTMLSelectElement).value);
+    if (value === 3 || value === 4 || value === 5) {
+      playerCount = value;
+    }
+  }
 </script>
 
-<main class="layout">
+<main class="playground-layout">
   <header>
-    <h1>La Mosca — playground</h1>
-    <p>Fase 1: motor, bots y mesa Pixi mínima. Sin arte final. No jugás vos: los cuatro (o más) son bots.</p>
+    <h1>La Mosca — mesa de prueba</h1>
+    <p>Herramienta de desarrollo: todos son bots. El juego real está en el menú.</p>
+    <button class="btn btn-ghost" type="button" onclick={onBack}>Volver al menú</button>
   </header>
 
   <p class="hint">
-    <strong>Nueva partida</strong> solo arranca el motor (corte, scores en 20).
+    <strong>Nueva partida</strong> solo arranca el motor.
     <strong>Paso</strong> ejecuta un comando de bot.
-    <strong>Auto (80)</strong> avanza 80 comandos; una partida completa suele necesitar varios clics.
-    <strong>Hasta el final</strong> deja que los bots terminen. El panel Estado y el log tienen que coincidir con la mesa.
+    <strong>Hasta el final</strong> deja que los bots terminen.
   </p>
 
   <section class="controls">
-    <label>
+    <label class="field">
       Seed
       <input type="number" bind:value={seed} />
     </label>
-    <label>
+    <label class="field">
       Jugadores
-      <select bind:value={playerCount}>
-        <option value={3}>3</option>
-        <option value={4}>4</option>
-        <option value={5}>5</option>
+      <select value={playerCount} onchange={onPlayerCount}>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
       </select>
     </label>
-    <label>
+    <label class="field">
       Mazo
       <select bind:value={deckConfiguration}>
         <option value="TRADITIONAL_40">40 cartas</option>
         <option value="FULL_48">48 cartas</option>
       </select>
     </label>
-    <button onclick={start}>Nueva partida</button>
-    <button disabled={!canAct} onclick={() => session?.step()}>Paso</button>
-    <button disabled={!canAct} onclick={() => session?.runAuto()}>Auto (80)</button>
-    <button disabled={!canAct} onclick={() => session?.runUntilEnd()}>Hasta el final</button>
-    <button disabled={!canAct} onclick={() => session?.forcePalito()}>Forzar palito</button>
+    <button class="btn" type="button" onclick={start}>Nueva partida</button>
+    <button class="btn" type="button" disabled={!canAct} onclick={() => session?.step()}>Paso</button>
+    <button class="btn" type="button" disabled={!canAct} onclick={() => session?.runAuto()}>Auto (80)</button>
+    <button class="btn" type="button" disabled={!canAct} onclick={() => session?.runUntilEnd()}>Hasta el final</button>
+    <button class="btn" type="button" disabled={!canAct} onclick={() => session?.forcePalito()}>Forzar palito</button>
   </section>
 
   <section class="grid">
@@ -112,7 +121,7 @@
       <aside>
         <h2>Estado</h2>
         {#if finished}
-          <p class="banner">Partida terminada · ganador: {debug.winnerPlayerId ?? "—"}</p>
+          <p class="hud-chip">Partida terminada · ganador: {debug.winnerPlayerId ?? "—"}</p>
         {/if}
         <p>Fase: {debug.phase}</p>
         <p>Mano: {debug.handNumber}</p>

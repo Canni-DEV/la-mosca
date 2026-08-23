@@ -80,6 +80,26 @@ Este archivo registra decisiones durables. No hace falta crear un ADR separado p
 
 **Razón:** FUNCTIONAL_SPEC §22 hace la detección automática. El comando explícito permite inspeccionar el fin de mano en el playground y en tests.
 
+## D-018 — Corte automático en el MVP jugable
+
+**Decisión:** en la partida humano vs bots el corte digital se ejecuta automáticamente (también si el humano es el que corta). El índice se elige con el RNG de sesión, no con un control de UI.
+
+**Razón:** el corte conserva dos grupos no vacíos y la atribución del cutter, pero no es una decisión estratégica en mesa digital. Evita un control extra sin cambiar las reglas.
+
+**Consecuencias relevantes:** el playground sigue pudiendo avanzar el corte paso a paso. No existe comando de corte manual en la UI de Fase 2.
+
+## D-019 — Humano fijo en `p1` / asiento inferior
+
+**Decisión:** el jugador humano es siempre `p1`, se sienta abajo y el primer dealer de la partida es ese asiento. Los bots ocupan el resto de asientos, en sentido horario.
+
+**Razón:** simplifica vista filtrada, input y layout Pixi sin perder rotación de dealer entre manos.
+
+## D-020 — Cartas y SFX procedurales en Fase 2
+
+**Decisión:** las cartas españolas y los SFX del MVP jugable se generan en el cliente (canvas + Web Audio), empaquetados con el build, sin assets comerciales ni fetches remotos.
+
+**Razón:** identidad reconocible y licencia clara sin bloquear la fase por un set ilustrado final. La Fase 3 puede reemplazarlos por arte de mayor fidelidad.
+
 ## Cómo agregar una decisión
 
 Agregar:

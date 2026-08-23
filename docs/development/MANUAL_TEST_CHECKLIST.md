@@ -2,6 +2,25 @@
 
 Este checklist crece con las fases. La especificación de cada fase incluye un subconjunto más concreto.
 
+## Partida jugable Fase 2
+
+- [ ] Menú: Jugar, Cómo jugar, Opciones, Mesa de prueba.
+- [ ] Nueva partida 3 / 4 / 5 jugadores.
+- [ ] Mazo 40 y mazo 48.
+- [ ] Entrada a la mesa con reparto animado y triunfo visible.
+- [ ] Paso por botón y por doble toque/click en la zona propia.
+- [ ] Cambio: seleccionar 0–3, confirmar; la carta de triunfo del dealer no se elige.
+- [ ] Con triunfo 2 no aparecen Paso ni cambio.
+- [ ] Jugar carta con un click/tap; las ilegales siguen clickeables.
+- [ ] Palito: texto `¡SALTASTE EL PALITO!`, +50, sin modal.
+- [ ] Mosca y Chupado se ven en mesa.
+- [ ] Scores junto a cada asiento; el turno actual se entiende.
+- [ ] La mano propia no queda tapada por el HUD.
+- [ ] Audio mute/volumen; la partida sigue siendo comprensible en silencio.
+- [ ] Victoria corta la partida; Revancha / Nueva partida / Menú funcionan.
+- [ ] No hay errores relevantes en consola.
+- [ ] `pnpm build` genera un estático usable.
+
 ## Playground Fase 1
 
 - [ ] `pnpm install` y `pnpm dev` abren el playground.
