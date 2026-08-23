@@ -67,12 +67,6 @@
   const finished = $derived(debug?.phase === "GAME_OVER");
   const canAct = $derived(session !== null && !finished);
 
-  function onPlayerCount(event: Event): void {
-    const value = Number((event.currentTarget as HTMLSelectElement).value);
-    if (value === 3 || value === 4 || value === 5) {
-      playerCount = value;
-    }
-  }
 </script>
 
 <main class="playground-layout">
@@ -95,10 +89,10 @@
     </label>
     <label class="field">
       Jugadores
-      <select value={playerCount} onchange={onPlayerCount}>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
+      <select bind:value={playerCount}>
+        <option value={3}>3</option>
+        <option value={4}>4</option>
+        <option value={5}>5</option>
       </select>
     </label>
     <label class="field">

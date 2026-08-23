@@ -23,20 +23,6 @@
       seed: Date.now() % 1_000_000_000,
     });
   }
-
-  function onPlayerCount(event: Event): void {
-    const value = Number((event.currentTarget as HTMLSelectElement).value);
-    if (value === 3 || value === 4 || value === 5) {
-      playerCount = value;
-    }
-  }
-
-  function onDeck(event: Event): void {
-    const value = (event.currentTarget as HTMLSelectElement).value;
-    if (value === "TRADITIONAL_40" || value === "FULL_48") {
-      deckConfiguration = value;
-    }
-  }
 </script>
 
 <main class="screen">
@@ -45,15 +31,15 @@
     <p class="hint">Un humano contra bots. El mazo de 40 es el tradicional; el de 48 agrega 8 y 9.</p>
     <label class="field">
       Jugadores
-      <select value={playerCount} onchange={onPlayerCount}>
-        <option value="3">3 — vos y 2 bots</option>
-        <option value="4">4 — vos y 3 bots</option>
-        <option value="5">5 — vos y 4 bots</option>
+      <select bind:value={playerCount}>
+        <option value={3}>3 — vos y 2 bots</option>
+        <option value={4}>4 — vos y 3 bots</option>
+        <option value={5}>5 — vos y 4 bots</option>
       </select>
     </label>
     <label class="field">
       Mazo
-      <select value={deckConfiguration} onchange={onDeck}>
+      <select bind:value={deckConfiguration}>
         <option value="TRADITIONAL_40">40 cartas (tradicional)</option>
         <option value="FULL_48">48 cartas (con 8 y 9)</option>
       </select>
