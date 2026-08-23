@@ -1,0 +1,23 @@
+{
+  "name": "la-mosca",
+  "private": true,
+  "version": "0.1.0",
+  "description": "La Mosca — variante Las Parejas",
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @la-mosca/web dev",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "build": "pnpm -r --if-present build",
+    "simulate": "vitest run packages/game-ai/tests/simulation.test.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

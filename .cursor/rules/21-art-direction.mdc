@@ -1,0 +1,21 @@
+---
+description: "Visual identity for the La Mosca game presentation"
+globs:
+  - "apps/web/src/scene/**"
+  - "apps/web/src/styles/**"
+  - "apps/web/src/assets/**"
+  - "apps/web/src/components/**"
+alwaysApply: false
+---
+# Art direction
+
+Read `docs/design/ART_DIRECTION.md`, `CARD_ASSET_BRIEF.md` and `GAME_FEEL_AND_ANIMATION.md`.
+
+- Target a stylized, polished **Argentine bar/bodegón** atmosphere.
+- Warm worn wood, restrained table objects, soft warm light, traditional Spanish cards.
+- A generic glass of fernet-and-cola may be used as an environmental detail; no commercial branding.
+- Avoid casino-green tables, poker chips, neon, SaaS/dashboard panels and generic stock casino visuals.
+- Cards must look recognizably traditional Spanish while using original/licensed art; do not copy a commercial deck verbatim.
+- Prioritize legibility over decoration.
+- Mosca, Chupado and Palito need distinct feedback; Palito should be punchy but not modal/blocking.
+- Decoration is expendable on small screens; cards, trick, score, turn and trump are not.

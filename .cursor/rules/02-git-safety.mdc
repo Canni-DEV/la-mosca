@@ -1,0 +1,20 @@
+---
+description: "Git operations are controlled by the repository owner"
+alwaysApply: true
+---
+# Git safety
+
+The user owns all commits and repository-history changes.
+
+You MUST NOT perform by initiative:
+
+- `git commit`
+- `git push`
+- branch creation/switching for workflow purposes
+- merge/rebase
+- tags/releases
+- destructive reset/clean operations
+
+You MAY use read-only inspection such as `git status`, `git diff`, `git log` and equivalent commands.
+
+When a phase is complete, leave the working tree ready for the user to inspect and commit manually.

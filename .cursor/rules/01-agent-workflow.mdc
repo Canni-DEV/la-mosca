@@ -1,0 +1,16 @@
+---
+description: "How the Cursor agent should execute phases and report work"
+alwaysApply: true
+---
+# Agent workflow
+
+- Work in **large coherent phase deliveries**, not a chain of micro-approvals.
+- Read the active phase document in `docs/development/phases/` before implementation.
+- Do not advance to the next phase until the user explicitly approves/requests it.
+- Do not ask about minor technical choices already resolvable by repository docs or standard engineering judgment.
+- Ask only when a missing gameplay rule changes outcomes, requirements conflict materially, or scope would change.
+- Before declaring a phase complete, run relevant tests, typecheck and build; fix failures introduced by your work.
+- Update `PROJECT_STATUS.md` when a phase is ready for manual acceptance.
+- End a phase with: implementation summary, run commands, automated checks, concrete manual test checklist, important decisions, real pending limitations.
+- Keep documentation synchronized when making durable architectural decisions.
+- Prefer useful implementation over ceremony. Do not spend disproportionate time adding low-value tests, abstractions or documents.

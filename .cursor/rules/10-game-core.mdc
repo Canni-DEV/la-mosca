@@ -1,0 +1,21 @@
+---
+description: "Rules for game-core and game-protocol implementation"
+globs:
+  - "packages/game-core/**"
+  - "packages/game-protocol/**"
+alwaysApply: false
+---
+# Game core and protocol
+
+Before changing gameplay logic, read `docs/game/FUNCTIONAL_SPEC.md`.
+
+- Implement the functional spec literally. Do not normalize La Mosca to Brisca/Tute or an online ruleset.
+- `game-core` must run without a browser.
+- Use deterministic/injectable RNG; no scattered `Math.random()` in domain logic.
+- Never compare natural card rank numbers to decide strength; use the documented strength order.
+- Keep gameplay commands/events serializable and independent from presentation.
+- A reglamentarily illegal card play is **allowed input** and produces `PalitoViolation +50`; do not reject it as an invalid command when the player owns the card and may act.
+- Respect the normative event/scoring order, especially Palito before trick scoring.
+- Keep lead-suit priority and mandatory overtake rules exact.
+- Add focused tests for any changed rule or invariant.
+- Never depend on Svelte, PixiJS, DOM, audio, WebSocket or bot code.

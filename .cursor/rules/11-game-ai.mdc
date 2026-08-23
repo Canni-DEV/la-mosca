@@ -1,0 +1,18 @@
+---
+description: "Constraints for the initial heuristic AI"
+globs:
+  - "packages/game-ai/**"
+alwaysApply: false
+---
+# Game AI
+
+Read `docs/ai/BOT_SPECIFICATION.md` before changing bot behavior.
+
+- Bots use the same public commands as humans.
+- Bots cannot mutate state directly.
+- Bots cannot inspect hidden opponent cards or undealt cards.
+- Initial bot is heuristic only; no ML, LLM, MCTS or remote services.
+- Use seeded RNG for tie-breaking.
+- The baseline bot never intentionally jumps Palito.
+- Keep tests contractual and small: legal play, pass constraints, exchange limit, Mosca declaration, determinism.
+- Do not spend time optimizing competitive strength unless explicitly requested.

@@ -1,0 +1,19 @@
+---
+description: "Quality and testing rules proportional to project risk"
+globs:
+  - "**/*.ts"
+  - "**/*.svelte"
+alwaysApply: false
+---
+# Quality
+
+Read `docs/development/TESTING_STRATEGY.md` when adding substantial tests.
+
+- TypeScript strict; avoid unnecessary `any`.
+- Favor clear domain functions over abstraction layers with no current value.
+- Tests are strongest in `game-core`, selective in session/AI, and minimal for purely visual details.
+- No arbitrary coverage target.
+- Do not write low-value snapshot/unit tests just to increase test count.
+- For UI/game feel, manual testing is first-class and must be included at phase handoff.
+- Run focused tests while developing; run the relevant full suite/typecheck/build before phase completion.
+- Fix warnings/errors that indicate real defects, but do not derail a phase into unrelated cleanup.

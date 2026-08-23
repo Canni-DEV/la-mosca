@@ -1,0 +1,21 @@
+---
+description: "Svelte, PixiJS, session and presentation boundaries"
+globs:
+  - "apps/web/**"
+alwaysApply: false
+---
+# Web presentation
+
+Read `docs/architecture/ARCHITECTURE.md` and the relevant `docs/design/` documents.
+
+- Svelte owns menus, HUD, overlays and application shell.
+- PixiJS owns the game table, cards, spatial effects and primary gameplay animation.
+- Do not implement the table as a collection of ordinary HTML card divs.
+- UI talks to `GameSession`; do not duplicate card legality/winner/scoring logic in Svelte or Pixi.
+- Sprites reflect game state. Sprite position is never authoritative state.
+- Maintain a presentation/animation queue driven by emitted game events.
+- Lock input only for presentation sequencing when needed; do not confuse this with gameplay legality.
+- Keep illegal-by-rule cards clickable so Palito remains possible.
+- Mouse and touch must both work for necessary interactions.
+- Desktop-first, but preserve usable responsive behavior.
+- Clean up Pixi resources/listeners when leaving or restarting a game.

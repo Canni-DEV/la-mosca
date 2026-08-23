@@ -1,0 +1,16 @@
+---
+description: "Core product and architecture principles for La Mosca"
+alwaysApply: true
+---
+# Project principles
+
+- Treat this as a **video game**, not a conventional web app with playing-card components.
+- Preserve exactly **La Mosca — variante Las Parejas**. Never invent or import alternative gameplay rules.
+- `docs/game/FUNCTIONAL_SPEC.md` is the normative source for gameplay.
+- Use TypeScript, Svelte, Vite and PixiJS 8 as approved.
+- Keep `game-core` pure and independent from Svelte, PixiJS, browser APIs, networking and bots.
+- UI consumes a `GameSession`; do not make presentation the source of truth.
+- Game state resolves before animation. Animations represent events; they never determine rules.
+- MVP is single-player and static. Do not add backend, database, auth or multiplayer unless a future phase explicitly asks for it.
+- Preserve architectural seams for a future authoritative multiplayer server and mobile hand/controller.
+- Read `PROJECT_STATUS.md` before substantial work and only implement the currently enabled phase.

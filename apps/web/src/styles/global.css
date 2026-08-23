@@ -1,0 +1,95 @@
+:root {
+  font-family: "Segoe UI", Georgia, serif;
+  color: #f3e6c8;
+  background: #1a100b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.layout {
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #ead9b2;
+}
+
+.banner {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #3d2914;
+  border: 1px solid #c4a574;
+  font-weight: 600;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+
+label {
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+}
+
+input,
+select,
+button {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #c4a574;
+  background: #2c1810;
+  color: #f3e6c8;
+}
+
+button {
+  cursor: pointer;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+.canvas {
+  min-height: 360px;
+  border: 1px solid #c4a574;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+aside,
+.log {
+  background: #24160f;
+  border: 1px solid #6b4b32;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.log ol {
+  max-height: 240px;
+  overflow: auto;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,111 @@
+# Checklist de testing manual acumulativo
+
+Este checklist crece con las fases. La especificación de cada fase incluye un subconjunto más concreto.
+
+## Playground Fase 1
+
+- [ ] `pnpm install` y `pnpm dev` abren el playground.
+- [ ] Seed visible y editable; al repetir seed el reparto coincide.
+- [ ] **Nueva partida** deja fase `HAND_CUT`, scores 20 y pocos eventos iniciales. Mesa Pixi, panel Estado y log coinciden.
+- [ ] **Paso** cambia turno/fase en los tres paneles a la vez.
+- [ ] **Hasta el final** termina en `GAME_OVER` con un ganador y score ≤ 0. Mesa, Estado y log muestran el mismo final (no un recorte al inicio de la partida).
+- [ ] El log indica el total de eventos y lista los más recientes arriba (`GameWon` / `GameEnded` / `ScoreChanged`).
+- [ ] Manos visibles en modo debug durante el juego.
+- [ ] El log de eventos muestra Palito si se usa "Forzar palito" en un turno con carta ilegal.
+
+## Partida y configuración
+
+- [ ] Crear partida de 3 jugadores con mazo 40.
+- [ ] Crear partida de 4 jugadores con mazo 40.
+- [ ] Crear partida de 5 jugadores con mazo 40.
+- [ ] Crear partida con mazo 48.
+- [ ] Verificar score inicial 20 para todos.
+
+## Reparto
+
+- [ ] Se reparten 5 cartas por jugador.
+- [ ] La quinta del dealer es la última carta y se revela.
+- [ ] El palo revelado se muestra como triunfo.
+- [ ] El dealer conserva esa carta.
+
+## Triunfo 1
+
+- [ ] Nadie puede pasar.
+- [ ] Se pueden cambiar hasta 3 cartas.
+- [ ] Dealer no puede cambiar la carta revelada.
+
+## Triunfo 2
+
+- [ ] Nadie puede pasar.
+- [ ] Nadie puede cambiar.
+
+## Paso
+
+- [ ] Jugador puede pasar cuando está permitido.
+- [ ] El pasado no juega bazas.
+- [ ] Su score no cambia.
+- [ ] Si queda solo el dealer/único activo, la mano se cancela y rota reparto.
+- [ ] Si quedan dos, se juega mano a mano.
+
+## Cambio
+
+- [ ] Se pueden seleccionar 0–3.
+- [ ] Sale la misma cantidad que entra.
+- [ ] Descartadas no vuelven a la mano.
+- [ ] La carta de triunfo del dealer no se puede cambiar.
+
+## Bazaje
+
+- [ ] Líder correcto abre primera baza.
+- [ ] Ganador abre siguiente.
+- [ ] Triunfo vence a no triunfo.
+- [ ] Jerarquía 1 > 3 > 12 > 11 > 10 ... > 2.
+
+## Obligaciones
+
+- [ ] Con palo de salida, debe asistir.
+- [ ] Si puede superar en ese palo, debe superar.
+- [ ] Si no tiene palo, debe triunfar.
+- [ ] Si hay triunfo y puede superarlo, debe hacerlo.
+- [ ] Si tiene palo de salida, no puede usar triunfo como jugada legal aunque gane.
+- [ ] Sin palo ni triunfo, libertad total.
+
+## Palito
+
+- [ ] Una carta ilegal sigue siendo jugable.
+- [ ] Se anuncia Palito.
+- [ ] +50 se aplica inmediatamente.
+- [ ] La carta permanece en la baza.
+- [ ] Puede haber múltiples +50 en la misma mano.
+- [ ] Si la jugada ilegal completa la baza, +50 ocurre antes del -1 del ganador.
+
+## Mosca
+
+- [ ] 1+3+12+11+10 del triunfo permite declarar Mosca.
+- [ ] No se juegan bazas.
+- [ ] -5 al jugador con Mosca.
+- [ ] +5 a otros activos si la partida no terminó antes.
+- [ ] Pasados no reciben chupado.
+- [ ] Si Mosca lleva a 0 o menos, termina inmediatamente.
+
+## Chupado
+
+- [ ] Activo con 0 bazas recibe +5 al fin normal.
+- [ ] Pasado no recibe +5.
+- [ ] Si la partida terminó antes, no se computa chupado pendiente.
+
+## Victoria
+
+- [ ] Score 0 termina inmediatamente.
+- [ ] Score negativo también.
+- [ ] No se completan bazas/mano después de Game Over.
+
+## UX visual
+
+- [ ] Siempre se entiende de quién es el turno.
+- [ ] Las cartas propias son legibles.
+- [ ] El triunfo es visible.
+- [ ] Scores son legibles.
+- [ ] Animaciones no traban input indefinidamente.
+- [ ] Audio puede mutearse.
+- [ ] No hay errores relevantes en consola.
