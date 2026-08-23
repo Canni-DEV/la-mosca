@@ -13,13 +13,14 @@ import type {
 } from "@la-mosca/game-protocol";
 import { ranksFor } from "@la-mosca/game-core";
 import { SUITS } from "@la-mosca/game-protocol";
+import { PresentationDirector } from "../animation/queue.ts";
 import { tween, wait, type TweenHandle } from "../animation/tween.ts";
 import { easeOutBack, easeOutCubic } from "../animation/easing.ts";
 import { allowShake } from "../animation/motion.ts";
 import { audioMixer } from "../audio/mixer.ts";
 import { CardSprite } from "./card-sprite.ts";
 import { preloadCardTextures } from "./card-textures.ts";
-import { createTableBackground } from "./table-background.ts";
+import { createTableBackground, preloadTableArt } from "./table-background.ts";
 import { fanOffset, layoutTable, type SeatLayout, type TableLayout } from "./table-layout.ts";
 
 export interface TableSyncOptions {
@@ -58,15 +59,30 @@ export class PixiTable {
   private tweenHandle: TweenHandle = { cancelled: false };
   private lastTap = 0;
   private banner: Text | null = null;
-  private trumpLabel: Text | null = null;
   private trickSprites: CardSprite[] = [];
+  private director = new PresentationDirector();
+  private destroyed = false;
+  private chromeKey = "";
   handlers: TableHandlers = {};
 
   async mount(host: HTMLElement): Promise<void> {
     this.host = host;
+    this.destroyed = false;
+    this.director.reset();
+    this.tweenHandle = { cancelled: false };
+    this.chromeKey = "";
+    this.root = new Container();
+    this.world = new Container();
+    this.cardLayer = new Container();
+    this.hudLayer = new Container();
+    this.overlayLayer = new Container();
+    await Promise.all([preloadTableArt(), preloadAllFaces()]);
+    if (this.destroyed) {
+      return;
+    }
     const app = new Application();
     await app.init({
-      background: 0x1a100b,
+      background: 0x140c08,
       resizeTo: host,
       antialias: true,
       autoDensity: true,
@@ -77,28 +93,32 @@ export class PixiTable {
     app.canvas.style.width = "100%";
     app.canvas.style.height = "100%";
     this.app = app;
-    preloadAllFaces();
     app.stage.addChild(this.root);
     this.root.eventMode = "static";
     this.root.on("pointertap", (event) => this.handleTableTap(event.global.x, event.global.y));
-    this.rebuildChrome();
+    audioMixer.startAmbience();
   }
 
   resize(): void {
     if (!this.app || !this.view) {
       return;
     }
-    this.rebuildChrome();
     this.sync(this.view, { selectedIds: this.selectedIds, inputLocked: this.inputLocked });
   }
 
   destroy(): void {
+    this.destroyed = true;
+    this.director.cancel();
     this.tweenHandle.cancelled = true;
+    audioMixer.stopAmbience();
+    this.root.removeAllListeners();
     this.app?.destroy(true, { children: true, texture: false });
     this.app = null;
     this.host = null;
     this.cards.clear();
     this.seatHud.clear();
+    this.trickSprites = [];
+    this.banner = null;
   }
 
   sync(view: PlayerViewState, options: TableSyncOptions = {}): void {
@@ -131,6 +151,7 @@ export class PixiTable {
   async presentEvents(events: readonly GameEvent[], view: PlayerViewState): Promise<void> {
     this.view = view;
     this.ensureLayout(view);
+    const clips: Array<() => Promise<void>> = [];
     let index = 0;
     while (index < events.length) {
       const event = events[index];
@@ -143,11 +164,20 @@ export class PixiTable {
           batch.push(events[index] as CardDealtEvent);
           index += 1;
         }
-        await this.animateDeal(batch, view);
+        clips.push(async () => {
+          await this.animateDeal(batch, view);
+        });
         continue;
       }
-      await this.presentOne(event, view);
+      const current = event;
+      clips.push(async () => {
+        await this.presentOne(current, view);
+      });
       index += 1;
+    }
+    await this.director.run(clips);
+    if (this.destroyed) {
+      return;
     }
     this.sync(view, { selectedIds: this.selectedIds, inputLocked: this.inputLocked });
   }
@@ -231,13 +261,12 @@ export class PixiTable {
     }
     this.cards.clear();
     this.trickSprites = [];
-    this.trumpLabel = null;
     this.banner = null;
     this.seatHud.clear();
     this.cardLayer.removeChildren();
     this.hudLayer.removeChildren();
     this.overlayLayer.removeChildren();
-    const bg = createTableBackground(app.renderer.width, app.renderer.height);
+    const bg = createTableBackground(app.screen.width, app.screen.height, this.layout);
     this.world.addChild(bg);
     this.world.addChild(this.cardLayer);
     this.world.addChild(this.hudLayer);
@@ -251,11 +280,17 @@ export class PixiTable {
       return;
     }
     this.layout = layoutTable(
-      app.renderer.width,
-      app.renderer.height,
+      app.screen.width,
+      app.screen.height,
       view.players,
       view.viewerId,
+      view.dealerPlayerId,
     );
+    const key = `${this.layout.width}x${this.layout.height}x${this.layout.seats.length}`;
+    if (key !== this.chromeKey) {
+      this.chromeKey = key;
+      this.rebuildChrome();
+    }
   }
 
   private layoutSeats(view: PlayerViewState): void {
@@ -286,28 +321,6 @@ export class PixiTable {
       hud.turn.visible = turn && !passed;
       hud.root.alpha = passed ? 0.55 : 1;
     }
-    this.drawTrumpLabel(view);
-  }
-
-  private drawTrumpLabel(view: PlayerViewState): void {
-    const layout = this.layout;
-    if (!layout) {
-      return;
-    }
-    this.trumpLabel?.destroy();
-    const text = new Text({
-      text: view.trumpSuit ? `Triunfo: ${SUIT_LABEL[view.trumpSuit]}` : "",
-      style: {
-        fill: 0xf3e6c8,
-        fontSize: 16,
-        fontFamily: "Georgia, serif",
-        fontWeight: "bold",
-      },
-    });
-    text.anchor.set(0.5, 0);
-    text.position.set(layout.trump.x, layout.trump.y + layout.cardHeight * 0.58);
-    this.hudLayer.addChild(text);
-    this.trumpLabel = text;
   }
 
   private reconcileCards(view: PlayerViewState): void {
@@ -328,7 +341,7 @@ export class PixiTable {
       for (let i = 0; i < player.cardCount; i += 1) {
         const key = hiddenKey(player.id, i);
         keep.add(key);
-        this.ensureCard(key, layout.cardWidth * 0.72, layout.cardHeight * 0.72, null, false);
+        this.ensureCard(key, layout.cardWidth * 0.48, layout.cardHeight * 0.48, null, false);
       }
     }
     if (view.currentTrick) {
@@ -341,13 +354,31 @@ export class PixiTable {
     if (view.revealedTrumpCard) {
       const key = trumpKey();
       keep.add(key);
-      this.ensureCard(key, layout.cardWidth * 0.84, layout.cardHeight * 0.84, view.revealedTrumpCard.id, true);
+      this.ensureCard(key, layout.stockWidth, layout.stockHeight, view.revealedTrumpCard.id, true);
     }
     const deckCount = Math.min(6, Math.max(2, Math.ceil(view.undealtCount / 8)));
     for (let i = 0; i < deckCount; i += 1) {
       const key = deckKey(i);
       keep.add(key);
-      this.ensureCard(key, layout.cardWidth * 0.7, layout.cardHeight * 0.7, null, false);
+      this.ensureCard(key, layout.stockWidth, layout.stockHeight, null, false);
+    }
+    for (const player of view.players) {
+      if (player.tricksWonInCurrentHand <= 0) {
+        continue;
+      }
+      const existing = [...this.cards.keys()].filter((key) => key.startsWith(`pile:${player.id}:`));
+      if (existing.length > 0) {
+        for (const key of existing) {
+          keep.add(key);
+        }
+      } else {
+        const n = Math.min(6, player.tricksWonInCurrentHand * 2);
+        for (let i = 0; i < n; i += 1) {
+          const key = pileKey(player.id, i);
+          keep.add(key);
+          this.ensureCard(key, layout.cardWidth * 0.6, layout.cardHeight * 0.6, null, false);
+        }
+      }
     }
     for (const [key, sprite] of this.cards) {
       if (!keep.has(key)) {
@@ -369,13 +400,13 @@ export class PixiTable {
         if (!sprite) {
           return;
         }
-        const fan = fanOffset(index, view.hand.length, layout.cardWidth * 0.62);
+        const fan = fanOffset(index, view.hand.length, layout.cardWidth * layout.fanSpacing);
         const selected = this.selectedIds.includes(card.id);
         const legal = view.legalCardIds.length === 0 || view.legalCardIds.includes(card.id);
         const blocked = view.availableActions
           .find((action) => action.type === "EXCHANGE_CARDS")
           ?.blockedCardIds?.includes(card.id);
-        const hoverLift = selected ? -22 : 0;
+        const hoverLift = selected ? -layout.cardHeight * 0.12 : 0;
         sprite.position.set(humanSeat.hand.x + fan.x, humanSeat.hand.y + fan.y + hoverLift);
         sprite.rotation = fan.rotation;
         sprite.zIndex = 100 + index;
@@ -398,7 +429,7 @@ export class PixiTable {
         if (!sprite) {
           continue;
         }
-        const fan = fanOffset(i, player.cardCount, layout.cardWidth * 0.22);
+        const fan = fanOffset(i, player.cardCount, layout.cardWidth * 0.18);
         const localX = fan.x;
         const localY = fan.y;
         const cos = Math.cos(seat.rotation);
@@ -408,6 +439,7 @@ export class PixiTable {
         sprite.zIndex = 20 + i;
         sprite.alpha = player.hasPassed ? 0.35 : 1;
         sprite.eventMode = "none";
+        sprite.setCardSize(layout.cardWidth * 0.48, layout.cardHeight * 0.48);
       }
     }
     view.currentTrick?.plays.forEach((play) => {
@@ -422,14 +454,16 @@ export class PixiTable {
       sprite.zIndex = 60 + play.playOrder;
       sprite.eventMode = "none";
       sprite.setFaceUp(true);
+      sprite.setCardSize(layout.cardWidth * 0.72, layout.cardHeight * 0.72);
     });
     if (view.revealedTrumpCard) {
       const sprite = this.cards.get(trumpKey());
       if (sprite) {
         sprite.position.set(layout.trump.x, layout.trump.y);
-        sprite.rotation = -0.12;
+        sprite.rotation = layout.stockRotation * 0.18 - 0.1;
         sprite.zIndex = 40;
         sprite.eventMode = "none";
+        sprite.setCardSize(layout.stockWidth, layout.stockHeight);
       }
     }
     const deckCount = Math.min(6, Math.max(2, Math.ceil(view.undealtCount / 8)));
@@ -438,10 +472,27 @@ export class PixiTable {
       if (!sprite) {
         continue;
       }
-      sprite.position.set(layout.deck.x + i * 1.2, layout.deck.y - i * 1.4);
-      sprite.rotation = 0.02 * i;
+      sprite.position.set(layout.deck.x + i * 0.8, layout.deck.y - i * 0.9);
+      sprite.rotation = layout.stockRotation * 0.18 + 0.015 * i;
       sprite.zIndex = 8 + i;
       sprite.eventMode = "none";
+      sprite.setCardSize(layout.stockWidth, layout.stockHeight);
+    }
+    for (const player of view.players) {
+      const seat = layout.seats.find((item) => item.id === player.id);
+      if (!seat) {
+        continue;
+      }
+      const pileSprites = [...this.cards.entries()].filter(([key]) => key.startsWith(`pile:${player.id}:`));
+      pileSprites.forEach(([, sprite], index) => {
+        sprite.position.set(seat.pile.x + index * 1.5, seat.pile.y - index * 1.7);
+        sprite.rotation = seat.rotation * 0.08 + index * 0.025;
+        sprite.zIndex = 14 + index;
+        sprite.alpha = 1;
+        sprite.setFaceUp(false);
+        sprite.eventMode = "none";
+        sprite.setCardSize(layout.cardWidth * 0.6, layout.cardHeight * 0.6);
+      });
     }
     this.cardLayer.sortableChildren = true;
   }
@@ -513,8 +564,8 @@ export class PixiTable {
       const key = faceUp ? cardKey(event.cardId) : hiddenKey(event.playerId, already);
       const sprite = this.ensureCard(
         key,
-        faceUp ? layout.cardWidth : layout.cardWidth * 0.72,
-        faceUp ? layout.cardHeight : layout.cardHeight * 0.72,
+        faceUp ? layout.cardWidth : layout.cardWidth * 0.48,
+        faceUp ? layout.cardHeight : layout.cardHeight * 0.48,
         faceUp ? event.cardId : null,
         false,
       );
@@ -522,7 +573,7 @@ export class PixiTable {
       sprite.rotation = 0;
       sprite.alpha = 1;
       sprite.zIndex = 80;
-      const fan = fanOffset(already, 5, faceUp ? layout.cardWidth * 0.62 : layout.cardWidth * 0.22);
+      const fan = fanOffset(already, 5, faceUp ? layout.cardWidth * layout.fanSpacing : layout.cardWidth * 0.2);
       const target = {
         x: seat.hand.x + fan.x,
         y: seat.hand.y + fan.y,
@@ -542,11 +593,31 @@ export class PixiTable {
     if (!layout) {
       return;
     }
-    const sprite = this.ensureCard(trumpKey(), layout.cardWidth * 0.84, layout.cardHeight * 0.84, cardId, false);
+    const sprite = this.ensureCard(trumpKey(), layout.stockWidth, layout.stockHeight, cardId, false);
     sprite.position.set(layout.deck.x, layout.deck.y);
-    await this.moveSprite(sprite, { x: layout.trump.x, y: layout.trump.y, rotation: -0.12 }, 280);
+    sprite.setFaceUp(false);
+    await this.moveSprite(sprite, { x: layout.trump.x, y: layout.trump.y, rotation: layout.stockRotation * 0.18 - 0.1 }, 280);
+    await this.flipReveal(sprite, cardId);
+  }
+
+  private async flipReveal(sprite: CardSprite, cardId: CardId): Promise<void> {
+    await tween({
+      duration: 140,
+      handle: this.tweenHandle,
+      onUpdate: (t) => {
+        sprite.scale.x = Math.max(0.02, 1 - t);
+      },
+    });
     sprite.reveal(cardId);
-    this.drawTrumpLabel(view);
+    await tween({
+      duration: 160,
+      handle: this.tweenHandle,
+      easing: easeOutCubic,
+      onUpdate: (t) => {
+        sprite.scale.x = Math.max(0.02, t);
+      },
+    });
+    sprite.scale.x = 1;
   }
 
   private async animatePass(playerId: PlayerId, view: PlayerViewState): Promise<void> {
@@ -598,8 +669,8 @@ export class PixiTable {
       const key = faceUp ? cardKey(drawn[i]!) : hiddenKey(playerId, 20 + i);
       const sprite = this.ensureCard(
         key,
-        faceUp ? layout.cardWidth : layout.cardWidth * 0.72,
-        faceUp ? layout.cardHeight : layout.cardHeight * 0.72,
+        faceUp ? layout.cardWidth : layout.cardWidth * 0.48,
+        faceUp ? layout.cardHeight : layout.cardHeight * 0.48,
         faceUp ? drawn[i]! : null,
         false,
       );
@@ -650,8 +721,19 @@ export class PixiTable {
     await Promise.all(
       sprites.map((sprite) => this.moveSprite(sprite, { x: seat.pile.x, y: seat.pile.y, rotation: seat.rotation }, 320)),
     );
-    for (const sprite of sprites) {
-      sprite.alpha = 0;
+    const existing = [...this.cards.keys()].filter((key) => key.startsWith(`pile:${winnerId}:`)).length;
+    for (const [index, sprite] of sprites.entries()) {
+      const oldKey = [...this.cards.entries()].find(([, item]) => item === sprite)?.[0];
+      if (oldKey) {
+        this.cards.delete(oldKey);
+      }
+      const key = pileKey(winnerId, existing + index);
+      this.cards.set(key, sprite);
+      sprite.setFaceUp(false);
+      sprite.alpha = 1;
+      sprite.eventMode = "none";
+      sprite.zIndex = 14 + existing + index;
+      sprite.position.set(seat.pile.x + (existing + index) * 1.5, seat.pile.y - (existing + index) * 1.7);
     }
   }
 
@@ -820,29 +902,33 @@ interface SeatHud {
 
 function createSeatHud(): SeatHud {
   const root = new Container();
+  const paper = new Graphics();
+  paper.roundRect(-72, -26, 144, 70, 8);
+  paper.fill({ color: 0xe8d9b6, alpha: 0.92 });
+  paper.stroke({ width: 2, color: 0x8a6a3b, alpha: 0.8 });
   const turn = new Graphics();
-  turn.roundRect(-78, -28, 156, 74, 12);
+  turn.roundRect(-76, -30, 152, 78, 10);
   turn.stroke({ width: 3, color: 0xe8c37a, alpha: 0.95 });
   turn.fill({ color: 0x000000, alpha: 0 });
   const name = new Text({
     text: "",
-    style: { fill: 0xf3e6c8, fontSize: 16, fontFamily: "Georgia, serif", fontWeight: "bold" },
+    style: { fill: 0x2a1810, fontSize: 15, fontFamily: "Georgia, serif", fontWeight: "bold" },
   });
   name.anchor.set(0.5, 0);
   name.y = -18;
   const score = new Text({
     text: "20",
-    style: { fill: 0xffe7b0, fontSize: 22, fontFamily: "Georgia, serif", fontWeight: "bold" },
+    style: { fill: 0x6b2a22, fontSize: 22, fontFamily: "Georgia, serif", fontWeight: "bold" },
   });
   score.anchor.set(0.5, 0);
   score.y = 2;
   const meta = new Text({
     text: "",
-    style: { fill: 0xd9c4a0, fontSize: 12, fontFamily: "Segoe UI, sans-serif" },
+    style: { fill: 0x5a4030, fontSize: 11, fontFamily: "Segoe UI, sans-serif" },
   });
   meta.anchor.set(0.5, 0);
   meta.y = 28;
-  root.addChild(turn, name, score, meta);
+  root.addChild(paper, turn, name, score, meta);
   return { root, name, score, meta, turn };
 }
 
@@ -856,6 +942,10 @@ function hiddenKey(playerId: PlayerId, index: number): string {
 
 function trumpKey(): string {
   return "trump:card";
+}
+
+function pileKey(playerId: PlayerId, index: number): string {
+  return `pile:${playerId}:${index}`;
 }
 
 function deckKey(index: number): string {
@@ -873,9 +963,9 @@ function isSprite(value: CardSprite | undefined): value is CardSprite {
   return Boolean(value);
 }
 
-function preloadAllFaces(): void {
+async function preloadAllFaces(): Promise<void> {
   const ids = SUITS.flatMap((suit) => ranksFor("FULL_48").map((rank) => `${suit}_${rank}` as CardId));
-  preloadCardTextures(ids);
+  await preloadCardTextures(ids);
 }
 
 export { suitTitle } from "./card-art.ts";

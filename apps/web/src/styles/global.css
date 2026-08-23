@@ -166,12 +166,13 @@ button:disabled {
   position: relative;
   height: 100vh;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   background: var(--wood-night);
 }
 
 .table-host {
   min-height: 0;
+  overflow: hidden;
   position: relative;
   touch-action: manipulation;
 }
@@ -189,10 +190,11 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: rgba(20, 12, 8, 0.88);
+  background: rgba(20, 12, 8, 0.94);
   border-top: 1px solid #6b4b32;
   position: relative;
-  z-index: 2;
+  z-index: 3;
+  flex-shrink: 0;
 }
 
 .game-hud {
@@ -220,9 +222,88 @@ button:disabled {
   color: var(--gold-bright);
 }
 
+.hud-chip.plaque {
+  border-radius: 8px;
+  background: #ead9b2;
+  color: #2a1810;
+  border-color: #8a6a3b;
+}
+
+.trump-reminder {
+  position: absolute;
+  top: 64px;
+  right: 8px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 92px;
+  padding: 8px 10px 10px;
+  border-radius: 12px;
+  border: 1px solid #c4a574;
+  background: rgba(42, 24, 16, 0.92);
+  color: #f3e6c8;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+.trump-reminder-kicker {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c4a574;
+}
+
+.trump-reminder-suit {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+}
+
+.trump-reminder-card {
+  width: 72px;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.rank-line {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--gold-bright);
+}
+
+.hint-plaque {
+  position: absolute;
+  right: 16px;
+  bottom: 96px;
+  z-index: 4;
+  width: min(280px, calc(100% - 32px));
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #c4a574;
+  background: rgba(232, 217, 182, 0.94);
+  color: #2a1810;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.hint-plaque p {
+  margin: 6px 0 10px;
+  line-height: 1.4;
+  font-size: 14px;
+}
+
 .action-bar {
   justify-content: center;
-  min-height: 64px;
+  min-height: 72px;
+  padding-top: 12px;
+  padding-bottom: 14px;
+}
+
+.action-bar .hint {
+  flex: 1 1 220px;
+  max-width: 720px;
 }
 
 .banner-layer {
@@ -301,10 +382,41 @@ button:disabled {
   .brand {
     font-size: 42px;
   }
+
+  .game-hud,
+  .action-bar {
+    padding: 8px 10px;
+  }
+
+  .hint-plaque {
+    left: 12px;
+    right: 12px;
+    bottom: 76px;
+    width: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .screen {
+    padding: 20px 12px 32px;
+  }
+
+  .hud-chip {
+    font-size: 12px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .overlay,
+  .hint-plaque {
+    animation: none;
   }
 }

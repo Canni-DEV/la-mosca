@@ -2,9 +2,9 @@
 
 Repositorio base de documentación y reglas de agente para desarrollar **La Mosca — variante Las Parejas** como videojuego web.
 
-Este repositorio está preparado para abrirse directamente en **Cursor**. La Fase 2 ya tiene una partida single-player jugable contra bots.
+Este repositorio está preparado para abrirse directamente en **Cursor**. La Fase 3 está implementada y espera aceptación manual. La partida single-player contra bots sigue siendo el camino principal.
 
-## Cómo correr la Fase 2
+## Cómo correr la app
 
 ```bash
 pnpm install

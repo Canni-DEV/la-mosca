@@ -15,7 +15,7 @@
 <main class="screen">
   <div class="screen-card">
     <h1 class="brand">La Mosca</h1>
-    <p class="tagline">Variante Las Parejas</p>
+    <p class="tagline">Cartas en un bodegón. Variante Las Parejas.</p>
     <div class="stack">
       <button class="btn btn-primary" type="button" onclick={onPlay}>Jugar</button>
       <button class="btn" type="button" onclick={onHowTo}>Cómo jugar</button>

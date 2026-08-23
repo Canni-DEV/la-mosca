@@ -1,17 +1,17 @@
 # Estado del proyecto
 
 **Proyecto:** La Mosca  
-**Estado actual:** Fase 2 implementada, pendiente de aceptación manual  
-**Fase habilitada:** Fase 2 — Playable MVP  
-**Próxima acción:** testing manual de la Fase 2; no iniciar Fase 3 hasta aprobación explícita
+**Estado actual:** Fase 3 implementada, pendiente de aceptación manual  
+**Fase habilitada:** Fase 3 — Professional Presentation  
+**Próxima acción:** testing manual de la Fase 3; no iniciar la Fase 4 hasta aprobación explícita
 
 ## Estado por fases
 
 | Fase | Estado | Resultado esperado |
 |---|---|---|
 | 1. Foundation & Rules Engine | ACCEPTED | Monorepo, motor determinístico, protocolo, bot base y playground verificable |
-| 2. Playable MVP | PHASE_2_WAITING_FOR_MANUAL_ACCEPTANCE | Partida completa humano vs bots con mesa funcional |
-| 3. Professional Presentation | BLOCKED | Dirección artística, animación, audio y game feel profesional |
+| 2. Playable MVP | ACCEPTED | Partida completa humano vs bots con mesa funcional |
+| 3. Professional Presentation | PHASE_3_WAITING_FOR_MANUAL_ACCEPTANCE | Dirección artística, animación, audio y game feel profesional |
 | 4. Release Candidate | BLOCKED | Hardening, responsive, accesibilidad, performance y GitHub Pages |
 | Multiplayer futuro | NOT IN CURRENT SCOPE | Servidor autoritativo, rooms, view states remotos |
 | Mobile hand/controller | NOT IN CURRENT SCOPE | Celular asociado al jugador como mano/controlador |
@@ -25,14 +25,18 @@ Aceptada manualmente el 23 de agosto de 2026.
 - Bot heurístico `STANDARD` y simulación bot-vs-bot
 - Playground Svelte + PixiJS mínimo para inspeccionar partidas (sigue disponible como “Mesa de prueba”)
 
-## Fase 2 — entregado
+## Fase 2 — cerrado
+
+Aceptada manualmente el 23 de agosto de 2026. Gameplay y reglas OK; sin errores de reglamento.
 
 - Menú, configuración 3/4/5 jugadores, mazo 40/48, cómo jugar, opciones de audio, victoria y revancha
 - `LocalGameSession` como frontera: 1 humano + 2–4 bots, sin que la UI decida legalidad
-- Mesa Pixi funcional: asientos, mazo, triunfo, baza, montoncitos, mano humana, dorsos rivales y scores
-- Paso (botón y doble toque), cambio 0–3, jugar cualquier carta propia, Palito, Mosca, Chupado y corte de partida al llegar a 0
-- Animación base de reparto, triunfo, jugadas, recolecta, paso, cambio, scores, Palito, Mosca y victoria
-- Mixer de audio con mute/volumen persistente y SFX procedurales
+- Mesa Pixi jugable, bots, animación base y audio con mute/volumen
+- Palito, Mosca, Chupado y corte de partida al llegar a 0
+
+## Fase 3 — entregado, espera aceptación manual
+
+Identidad de bodegón, mesa redonda, baraja española ilustrada local, mazo/triunfo a la derecha del dealer, props en imagen, HUD/tutorial/hints, animación/audio refinados y `prefers-reduced-motion`. `game-core` no se tocó.
 
 ## Regla de avance
 

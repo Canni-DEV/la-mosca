@@ -3,7 +3,9 @@
   import type { CardId, PlayerViewState } from "@la-mosca/game-protocol";
   import type { MatchSetup, VictoryInfo } from "../app/navigation.ts";
   import ActionBar from "../components/ActionBar.svelte";
+  import ContextualHints from "../components/ContextualHints.svelte";
   import GameHud from "../components/GameHud.svelte";
+  import TrumpReminder from "../components/TrumpReminder.svelte";
   import VictoryScreen from "./VictoryScreen.svelte";
   import { MatchController, unlockAudio } from "../game/match-controller.ts";
   import { HUMAN_PLAYER_ID } from "../game/LocalGameSession.ts";
@@ -82,6 +84,7 @@
 <section class="table-screen">
   <GameHud {view} onMenu={requestLeave} />
   <div class="table-host" bind:this={host}></div>
+  <TrumpReminder suit={view?.trumpSuit ?? null} card={view?.revealedTrumpCard ?? null} />
   <ActionBar
     {view}
     {locked}
@@ -89,6 +92,7 @@
     onPass={() => controller?.pass()}
     onConfirm={() => controller?.confirmDecision()}
   />
+  <ContextualHints {view} />
 </section>
 
 {#if leaving}

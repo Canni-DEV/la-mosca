@@ -1,35 +1,60 @@
 import type { Card, Rank, Suit } from "@la-mosca/game-protocol";
+import pipOrosUrl from "../assets/cards/pip-oros.png";
+import pipCopasUrl from "../assets/cards/pip-copas.png";
+import pipEspadasUrl from "../assets/cards/pip-espadas.png";
+import pipBastosUrl from "../assets/cards/pip-bastos.png";
+import backUrl from "../assets/cards/card-back.png";
+import courtOrosSotaUrl from "../assets/cards/court-oros-sota.png";
+import courtOrosCaballoUrl from "../assets/cards/court-oros-caballo.png";
+import courtOrosReyUrl from "../assets/cards/court-oros-rey.png";
+import courtCopasSotaUrl from "../assets/cards/court-copas-sota.png";
+import courtCopasCaballoUrl from "../assets/cards/court-copas-caballo.png";
+import courtCopasReyUrl from "../assets/cards/court-copas-rey.png";
+import courtEspadasSotaUrl from "../assets/cards/court-espadas-sota.png";
+import courtEspadasCaballoUrl from "../assets/cards/court-espadas-caballo.png";
+import courtEspadasReyUrl from "../assets/cards/court-espadas-rey.png";
+import courtBastosSotaUrl from "../assets/cards/court-bastos-sota.png";
+import courtBastosCaballoUrl from "../assets/cards/court-bastos-caballo.png";
+import courtBastosReyUrl from "../assets/cards/court-bastos-rey.png";
 
 export const CARD_ASPECT = 1.54;
-export const CARD_TEX_W = 300;
+export const CARD_TEX_W = 320;
 export const CARD_TEX_H = Math.round(CARD_TEX_W * CARD_ASPECT);
 
-const IVORY = "#f6edd8";
-const INK = "#22170f";
-const BORDER = "#6b2a22";
+const IVORY = "#f4ead2";
+const INK = "#1c140e";
+const BORDER = "#6a261c";
 const GOLD = "#c9a24b";
 
 const SUIT_COLOR: Record<Suit, string> = {
-  OROS: "#c3921f",
-  COPAS: "#b42318",
-  ESPADAS: "#1b2430",
-  BASTOS: "#2c5c2a",
+  OROS: "#b8860b",
+  COPAS: "#a31b14",
+  ESPADAS: "#1a2430",
+  BASTOS: "#2a5a28",
 };
 
-const RANK_LABEL: Record<Rank, string> = {
-  1: "AS",
-  2: "2",
-  3: "3",
-  4: "4",
-  5: "5",
-  6: "6",
-  7: "7",
-  8: "8",
-  9: "9",
+const COURT_NAME: Record<10 | 11 | 12, string> = {
   10: "SOTA",
   11: "CABALLO",
   12: "REY",
 };
+
+const PIP_URL: Record<Suit, string> = {
+  OROS: pipOrosUrl,
+  COPAS: pipCopasUrl,
+  ESPADAS: pipEspadasUrl,
+  BASTOS: pipBastosUrl,
+};
+
+const COURT_URL: Record<Suit, Record<10 | 11 | 12, string>> = {
+  OROS: { 10: courtOrosSotaUrl, 11: courtOrosCaballoUrl, 12: courtOrosReyUrl },
+  COPAS: { 10: courtCopasSotaUrl, 11: courtCopasCaballoUrl, 12: courtCopasReyUrl },
+  ESPADAS: { 10: courtEspadasSotaUrl, 11: courtEspadasCaballoUrl, 12: courtEspadasReyUrl },
+  BASTOS: { 10: courtBastosSotaUrl, 11: courtBastosCaballoUrl, 12: courtBastosReyUrl },
+};
+
+const images = new Map<string, HTMLImageElement>();
+let artReady: Promise<void> | null = null;
 
 export function suitTitle(suit: Suit): string {
   switch (suit) {
@@ -44,7 +69,19 @@ export function suitTitle(suit: Suit): string {
   }
 }
 
-export function drawCardFace(card: Card): HTMLCanvasElement {
+export async function preloadCardArt(): Promise<void> {
+  if (!artReady) {
+    const urls = [
+      backUrl,
+      ...Object.values(PIP_URL),
+      ...Object.values(COURT_URL).flatMap((entry) => Object.values(entry)),
+    ];
+    artReady = Promise.all(urls.map(loadImage)).then(() => undefined);
+  }
+  await artReady;
+}
+
+export function paintCardFace(card: Card): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = CARD_TEX_W;
   canvas.height = CARD_TEX_H;
@@ -52,8 +89,50 @@ export function drawCardFace(card: Card): HTMLCanvasElement {
   if (!ctx) {
     throw new Error("2D context unavailable");
   }
+  paintCardFrame(ctx);
   const color = SUIT_COLOR[card.suit];
-  roundRect(ctx, 0, 0, CARD_TEX_W, CARD_TEX_H, 22);
+  paintIndex(ctx, card, color, 22, 26, false);
+  paintIndex(ctx, card, color, CARD_TEX_W - 22, CARD_TEX_H - 26, true);
+  if (card.rank <= 9) {
+    paintPips(ctx, card);
+  } else {
+    paintCourt(ctx, card);
+  }
+  return canvas;
+}
+
+export function paintCardBack(): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = CARD_TEX_W;
+  canvas.height = CARD_TEX_H;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("2D context unavailable");
+  }
+  roundedRect(ctx, 0, 0, CARD_TEX_W, CARD_TEX_H, 22);
+  ctx.fillStyle = "#5a1d24";
+  ctx.fill();
+  const back = images.get(backUrl);
+  if (back) {
+    ctx.save();
+    roundedRect(ctx, 6, 6, CARD_TEX_W - 12, CARD_TEX_H - 12, 16);
+    ctx.clip();
+    ctx.drawImage(back, 6, 6, CARD_TEX_W - 12, CARD_TEX_H - 12);
+    ctx.restore();
+  }
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = "#3a1014";
+  roundedRect(ctx, 0, 0, CARD_TEX_W, CARD_TEX_H, 22);
+  ctx.stroke();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = GOLD;
+  roundedRect(ctx, 14, 14, CARD_TEX_W - 28, CARD_TEX_H - 28, 14);
+  ctx.stroke();
+  return canvas;
+}
+
+function paintCardFrame(ctx: CanvasRenderingContext2D): void {
+  roundedRect(ctx, 0, 0, CARD_TEX_W, CARD_TEX_H, 22);
   ctx.fillStyle = IVORY;
   ctx.fill();
   ctx.lineWidth = 10;
@@ -61,63 +140,11 @@ export function drawCardFace(card: Card): HTMLCanvasElement {
   ctx.stroke();
   ctx.lineWidth = 3;
   ctx.strokeStyle = GOLD;
-  roundRect(ctx, 14, 14, CARD_TEX_W - 28, CARD_TEX_H - 28, 14);
+  roundedRect(ctx, 13, 13, CARD_TEX_W - 26, CARD_TEX_H - 26, 14);
   ctx.stroke();
-
-  drawCorner(ctx, card, color, 24, 28, false);
-  drawCorner(ctx, card, color, CARD_TEX_W - 24, CARD_TEX_H - 28, true);
-
-  if (card.rank <= 9) {
-    drawPips(ctx, card, color);
-  } else {
-    drawCourt(ctx, card, color);
-  }
-  return canvas;
 }
 
-export function drawCardBack(): HTMLCanvasElement {
-  const canvas = document.createElement("canvas");
-  canvas.width = CARD_TEX_W;
-  canvas.height = CARD_TEX_H;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    throw new Error("2D context unavailable");
-  }
-  roundRect(ctx, 0, 0, CARD_TEX_W, CARD_TEX_H, 22);
-  ctx.fillStyle = "#5a1d24";
-  ctx.fill();
-  ctx.lineWidth = 10;
-  ctx.strokeStyle = "#3a1014";
-  ctx.stroke();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = GOLD;
-  roundRect(ctx, 16, 16, CARD_TEX_W - 32, CARD_TEX_H - 32, 14);
-  ctx.stroke();
-
-  ctx.save();
-  ctx.beginPath();
-  roundRect(ctx, 28, 28, CARD_TEX_W - 56, CARD_TEX_H - 56, 10);
-  ctx.clip();
-  ctx.fillStyle = "#6d2730";
-  for (let y = 20; y < CARD_TEX_H; y += 28) {
-    for (let x = 10; x < CARD_TEX_W; x += 28) {
-      ctx.save();
-      ctx.translate(x + ((y / 28) % 2) * 14, y);
-      ctx.rotate(Math.PI / 4);
-      ctx.fillRect(-7, -7, 14, 14);
-      ctx.restore();
-    }
-  }
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(CARD_TEX_W / 2, CARD_TEX_H / 2);
-  drawFly(ctx);
-  ctx.restore();
-  return canvas;
-}
-
-function drawCorner(
+function paintIndex(
   ctx: CanvasRenderingContext2D,
   card: Card,
   color: string,
@@ -131,31 +158,70 @@ function drawCorner(
     ctx.rotate(Math.PI);
   }
   ctx.fillStyle = color;
-  ctx.font = card.rank >= 10 ? "bold 18px Georgia, serif" : "bold 36px Georgia, serif";
+  ctx.font = "bold 42px 'Source Serif 4', Palatino, Georgia, serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  ctx.fillText(card.rank >= 10 ? String(card.rank) : RANK_LABEL[card.rank], 0, 0);
-  ctx.translate(18, card.rank >= 10 ? 28 : 42);
-  ctx.scale(0.55, 0.55);
-  drawSuit(ctx, card.suit, color);
+  ctx.fillText(String(card.rank), 0, 0);
+  const pip = images.get(PIP_URL[card.suit]);
+  if (pip) {
+    ctx.drawImage(pip, 2, 44, 28, 28);
+  }
   ctx.restore();
 }
 
-function drawPips(ctx: CanvasRenderingContext2D, card: Card, color: string): void {
+function paintPips(ctx: CanvasRenderingContext2D, card: Card): void {
+  const pip = images.get(PIP_URL[card.suit]);
   const cx = CARD_TEX_W / 2;
   const cy = CARD_TEX_H / 2;
-  const col = (n: number): number => cx + (n - 1) * 58;
-  const row = (n: number): number => cy + (n - 2) * 62;
-  const positions: Array<[number, number]> = pipLayout(card.rank).map(([c, r]) => [col(c), row(r)]);
-  for (const [x, y] of positions) {
+  const size = card.rank === 1 ? 118 : 58;
+  for (const [col, row] of pipLayout(card.rank)) {
+    const x = cx + (col - 1) * 72;
+    const y = cy + (row - 2) * 68;
     ctx.save();
     ctx.translate(x, y);
-    if (y > cy + 20) {
+    if (y > cy + 24) {
       ctx.rotate(Math.PI);
     }
-    drawSuit(ctx, card.suit, color);
+    if (pip) {
+      ctx.drawImage(pip, -size / 2, -size / 2, size, size);
+    } else {
+      ctx.fillStyle = SUIT_COLOR[card.suit];
+      ctx.beginPath();
+      ctx.arc(0, 0, size * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.restore();
   }
+}
+
+function paintCourt(ctx: CanvasRenderingContext2D, card: Card): void {
+  const rank = card.rank as 10 | 11 | 12;
+  const url = COURT_URL[card.suit][rank];
+  const image = images.get(url);
+  const x = 48;
+  const y = 78;
+  const w = CARD_TEX_W - 96;
+  const h = CARD_TEX_H - 168;
+  ctx.save();
+  roundedRect(ctx, x, y, w, h, 14);
+  ctx.fillStyle = "#efe3c4";
+  ctx.fill();
+  ctx.strokeStyle = SUIT_COLOR[card.suit];
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  if (image) {
+    ctx.save();
+    roundedRect(ctx, x + 6, y + 6, w - 12, h - 36, 10);
+    ctx.clip();
+    coverImage(ctx, image, x + 6, y + 6, w - 12, h - 36);
+    ctx.restore();
+  }
+  ctx.fillStyle = SUIT_COLOR[card.suit];
+  ctx.font = "bold 22px 'Source Serif 4', Palatino, Georgia, serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(COURT_NAME[rank], CARD_TEX_W / 2, y + h - 16);
+  ctx.restore();
 }
 
 function pipLayout(rank: Rank): Array<[number, number]> {
@@ -169,252 +235,103 @@ function pipLayout(rank: Rank): Array<[number, number]> {
       ];
     case 3:
       return [
-        [1, 0.6],
+        [1, 0.55],
         [1, 2],
-        [1, 3.4],
+        [1, 3.45],
       ];
     case 4:
       return [
-        [0.35, 0.8],
-        [1.65, 0.8],
-        [0.35, 3.2],
-        [1.65, 3.2],
+        [0.32, 0.75],
+        [1.68, 0.75],
+        [0.32, 3.25],
+        [1.68, 3.25],
       ];
     case 5:
       return [
-        [0.35, 0.8],
-        [1.65, 0.8],
+        [0.32, 0.75],
+        [1.68, 0.75],
         [1, 2],
-        [0.35, 3.2],
-        [1.65, 3.2],
+        [0.32, 3.25],
+        [1.68, 3.25],
       ];
     case 6:
       return [
-        [0.35, 0.7],
-        [1.65, 0.7],
-        [0.35, 2],
-        [1.65, 2],
-        [0.35, 3.3],
-        [1.65, 3.3],
+        [0.32, 0.65],
+        [1.68, 0.65],
+        [0.32, 2],
+        [1.68, 2],
+        [0.32, 3.35],
+        [1.68, 3.35],
       ];
     case 7:
       return [
-        [0.35, 0.55],
-        [1.65, 0.55],
-        [1, 1.35],
-        [0.35, 2.15],
-        [1.65, 2.15],
-        [0.35, 3.4],
-        [1.65, 3.4],
+        [0.32, 0.5],
+        [1.68, 0.5],
+        [1, 1.25],
+        [0.32, 2.15],
+        [1.68, 2.15],
+        [0.32, 3.45],
+        [1.68, 3.45],
       ];
     case 8:
       return [
-        [0.35, 0.5],
-        [1.65, 0.5],
-        [0.35, 1.5],
-        [1.65, 1.5],
-        [0.35, 2.5],
-        [1.65, 2.5],
-        [0.35, 3.5],
-        [1.65, 3.5],
+        [0.32, 0.45],
+        [1.68, 0.45],
+        [0.32, 1.45],
+        [1.68, 1.45],
+        [0.32, 2.55],
+        [1.68, 2.55],
+        [0.32, 3.55],
+        [1.68, 3.55],
       ];
     case 9:
       return [
-        [0.35, 0.5],
-        [1.65, 0.5],
-        [0.35, 1.4],
-        [1.65, 1.4],
+        [0.32, 0.4],
+        [1.68, 0.4],
+        [0.32, 1.35],
+        [1.68, 1.35],
         [1, 2],
-        [0.35, 2.6],
-        [1.65, 2.6],
-        [0.35, 3.5],
-        [1.65, 3.5],
+        [0.32, 2.65],
+        [1.68, 2.65],
+        [0.32, 3.55],
+        [1.68, 3.55],
       ];
     default:
       return [[1, 2]];
   }
 }
 
-function drawCourt(ctx: CanvasRenderingContext2D, card: Card, color: string): void {
-  const x = 54;
-  const y = 92;
-  const w = CARD_TEX_W - 108;
-  const h = CARD_TEX_H - 184;
-  ctx.save();
-  roundRect(ctx, x, y, w, h, 16);
-  ctx.fillStyle = "#efe3c4";
-  ctx.fill();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
-  ctx.stroke();
+function coverImage(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): void {
+  const scale = Math.max(w / image.width, h / image.height);
+  const dw = image.width * scale;
+  const dh = image.height * scale;
+  ctx.drawImage(image, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
 
-  ctx.translate(x + w / 2, y + h / 2);
-  ctx.fillStyle = color;
-  if (card.rank === 10) {
-    drawSota(ctx, color);
-  } else if (card.rank === 11) {
-    drawCaballo(ctx, color);
-  } else {
-    drawRey(ctx, color);
+function loadImage(url: string): Promise<HTMLImageElement> {
+  const existing = images.get(url);
+  if (existing) {
+    return Promise.resolve(existing);
   }
-  ctx.restore();
-
-  ctx.fillStyle = color;
-  ctx.font = "bold 22px Georgia, serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(RANK_LABEL[card.rank], CARD_TEX_W / 2, CARD_TEX_H / 2 + 148);
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      images.set(url, image);
+      resolve(image);
+    };
+    image.onerror = () => reject(new Error(`Could not load ${url}`));
+    image.src = url;
+  });
 }
 
-function drawSota(ctx: CanvasRenderingContext2D, color: string): void {
-  ctx.strokeStyle = color;
-  ctx.fillStyle = color;
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.arc(0, -38, 22, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(-28, 8);
-  ctx.quadraticCurveTo(0, -8, 28, 8);
-  ctx.lineTo(22, 70);
-  ctx.lineTo(-22, 70);
-  ctx.closePath();
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(18, 10);
-  ctx.lineTo(58, -18);
-  ctx.stroke();
-}
-
-function drawCaballo(ctx: CanvasRenderingContext2D, color: string): void {
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(-40, 48);
-  ctx.quadraticCurveTo(-30, -10, 8, -20);
-  ctx.quadraticCurveTo(38, -28, 48, -6);
-  ctx.quadraticCurveTo(36, 8, 18, 10);
-  ctx.quadraticCurveTo(8, 36, 22, 62);
-  ctx.moveTo(-18, 16);
-  ctx.lineTo(-8, 62);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(30, -14, 4, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawRey(ctx: CanvasRenderingContext2D, color: string): void {
-  ctx.strokeStyle = color;
-  ctx.fillStyle = color;
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(-34, -18);
-  ctx.lineTo(-20, -52);
-  ctx.lineTo(-6, -22);
-  ctx.lineTo(0, -58);
-  ctx.lineTo(8, -22);
-  ctx.lineTo(22, -52);
-  ctx.lineTo(34, -18);
-  ctx.closePath();
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(0, -6, 20, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(-30, 22);
-  ctx.lineTo(30, 22);
-  ctx.lineTo(24, 68);
-  ctx.lineTo(-24, 68);
-  ctx.closePath();
-  ctx.stroke();
-}
-
-export function drawSuit(ctx: CanvasRenderingContext2D, suit: Suit, color: string): void {
-  ctx.fillStyle = color;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
-  ctx.lineJoin = "round";
-  ctx.lineCap = "round";
-  switch (suit) {
-    case "OROS":
-      ctx.beginPath();
-      ctx.arc(0, 0, 22, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#f8e7b0";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(0, 0, 13, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(0, 0, 5, 0, Math.PI * 2);
-      ctx.stroke();
-      break;
-    case "COPAS": {
-      ctx.beginPath();
-      ctx.moveTo(0, 24);
-      ctx.quadraticCurveTo(-28, 8, -22, -8);
-      ctx.quadraticCurveTo(-16, -26, 0, -14);
-      ctx.quadraticCurveTo(16, -26, 22, -8);
-      ctx.quadraticCurveTo(28, 8, 0, 24);
-      ctx.fill();
-      ctx.fillRect(-3, 18, 6, 12);
-      ctx.fillRect(-12, 28, 24, 5);
-      break;
-    }
-    case "ESPADAS": {
-      ctx.beginPath();
-      ctx.moveTo(0, -26);
-      ctx.lineTo(12, 6);
-      ctx.lineTo(4, 6);
-      ctx.lineTo(4, 22);
-      ctx.lineTo(-4, 22);
-      ctx.lineTo(-4, 6);
-      ctx.lineTo(-12, 6);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillRect(-14, 22, 28, 5);
-      break;
-    }
-    case "BASTOS": {
-      ctx.beginPath();
-      ctx.moveTo(-4, 26);
-      ctx.quadraticCurveTo(-8, 4, -2, -22);
-      ctx.quadraticCurveTo(0, -30, 6, -24);
-      ctx.quadraticCurveTo(10, 0, 5, 26);
-      ctx.closePath();
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(-10, -6, 8, 5, -0.6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(12, 4, 8, 5, 0.5, 0, Math.PI * 2);
-      ctx.fill();
-      break;
-    }
-  }
-}
-
-function drawFly(ctx: CanvasRenderingContext2D): void {
-  ctx.fillStyle = "#e8d5a3";
-  ctx.beginPath();
-  ctx.ellipse(-16, -6, 18, 10, -0.4, 0, Math.PI * 2);
-  ctx.ellipse(16, -6, 18, 10, 0.4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#2a1810";
-  ctx.beginPath();
-  ctx.ellipse(0, 4, 8, 14, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = "#2a1810";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(-4, -8);
-  ctx.lineTo(-10, -22);
-  ctx.moveTo(4, -8);
-  ctx.lineTo(10, -22);
-  ctx.stroke();
-}
-
-function roundRect(
+function roundedRect(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,

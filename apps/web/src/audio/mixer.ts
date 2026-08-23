@@ -84,34 +84,37 @@ const CUES: Record<CueName, CueSpec> = {
     },
   },
   palito: {
-    duration: 0.38,
+    duration: 0.42,
     sample: (t) => {
-      const thump = Math.sin(2 * Math.PI * 72 * t) * Math.exp(-t * 10);
-      const slap = noise(t) * Math.exp(-t * 14);
-      return (thump * 0.7 + slap * 0.45) * 0.9;
+      const thump = Math.sin(2 * Math.PI * 64 * t) * Math.exp(-t * 8);
+      const wood = Math.sin(2 * Math.PI * 180 * t) * Math.exp(-t * 16) * 0.45;
+      const slap = noise(t) * Math.exp(-t * 12);
+      return (thump * 0.85 + wood + slap * 0.5) * 0.95;
     },
   },
   trump: {
-    duration: 0.28,
+    duration: 0.32,
     sample: (t) =>
-      (Math.sin(2 * Math.PI * 392 * t) + 0.4 * Math.sin(2 * Math.PI * 588 * t)) * Math.exp(-t * 6) * 0.22,
+      (Math.sin(2 * Math.PI * 392 * t) + 0.35 * Math.sin(2 * Math.PI * 588 * t) + 0.15 * Math.sin(2 * Math.PI * 784 * t)) *
+      Math.exp(-t * 5.5) *
+      0.24,
   },
   mosca: {
-    duration: 0.55,
+    duration: 0.7,
     sample: (t) => {
-      const f = t < 0.22 ? 523 : 784;
-      return (Math.sin(2 * Math.PI * f * t) + 0.25 * Math.sin(2 * Math.PI * f * 2 * t)) * Math.exp(-t * 4) * 0.28;
+      const f = t < 0.18 ? 392 : t < 0.38 ? 523 : 784;
+      return (Math.sin(2 * Math.PI * f * t) + 0.22 * Math.sin(2 * Math.PI * f * 2 * t)) * Math.exp(-t * 3.4) * 0.3;
     },
   },
   chupado: {
-    duration: 0.22,
-    sample: (t) => Math.sin(2 * Math.PI * 196 * t) * Math.exp(-t * 9) * 0.28,
+    duration: 0.26,
+    sample: (t) => Math.sin(2 * Math.PI * 185 * t) * Math.exp(-t * 8) * 0.3,
   },
   victory: {
-    duration: 0.7,
+    duration: 0.95,
     sample: (t) => {
-      const f = t < 0.22 ? 392 : t < 0.44 ? 523 : 659;
-      return (Math.sin(2 * Math.PI * f * t) + 0.2 * Math.sin(2 * Math.PI * f * 1.5 * t)) * Math.exp(-t * 3.2) * 0.3;
+      const f = t < 0.2 ? 392 : t < 0.4 ? 523 : t < 0.62 ? 659 : 784;
+      return (Math.sin(2 * Math.PI * f * t) + 0.18 * Math.sin(2 * Math.PI * f * 1.5 * t)) * Math.exp(-t * 2.6) * 0.32;
     },
   },
 };
@@ -128,6 +131,8 @@ export class AudioMixer {
   private buffers = new Map<CueName, AudioBuffer[]>();
   private listeners = new Set<() => void>();
   private variant = 0;
+  private ambience: AudioBufferSourceNode | null = null;
+  private ambienceGain: GainNode | null = null;
 
   get muted(): boolean {
     return this.settings.muted;
@@ -199,6 +204,39 @@ export class AudioMixer {
     window.setTimeout(() => this.play("knock"), 120);
   }
 
+  startAmbience(): void {
+    if (this.settings.muted || this.ambience) {
+      return;
+    }
+    void this.unlock().then(() => {
+      const ctx = this.ctx;
+      const master = this.master;
+      if (!ctx || !master || this.ambience) {
+        return;
+      }
+      const gain = ctx.createGain();
+      gain.gain.value = 0.045;
+      gain.connect(master);
+      const source = ctx.createBufferSource();
+      source.buffer = renderAmbience(ctx);
+      source.loop = true;
+      source.connect(gain);
+      source.start();
+      this.ambience = source;
+      this.ambienceGain = gain;
+    });
+  }
+
+  stopAmbience(): void {
+    try {
+      this.ambience?.stop();
+    } catch {
+      // already stopped
+    }
+    this.ambience = null;
+    this.ambienceGain = null;
+  }
+
   destroy(): void {
     this.listeners.clear();
   }
@@ -222,7 +260,7 @@ export class AudioMixer {
     }
     (Object.keys(CUES) as CueName[]).forEach((name) => {
       const spec = CUES[name];
-      const variants = name === "deal" || name === "place" || name === "shuffle" ? 3 : 1;
+      const variants = name === "deal" || name === "place" || name === "shuffle" || name === "collect" ? 4 : 1;
       const list: AudioBuffer[] = [];
       for (let v = 0; v < variants; v += 1) {
         list.push(renderCue(ctx, spec, v));
@@ -261,6 +299,21 @@ function renderCue(ctx: AudioContext, spec: CueSpec, variant: number): AudioBuff
   for (let i = 0; i < length; i += 1) {
     const t = i / sampleRate;
     data[i] = Math.max(-1, Math.min(1, spec.sample(t, variant)));
+  }
+  return buffer;
+}
+
+function renderAmbience(ctx: AudioContext): AudioBuffer {
+  const sampleRate = ctx.sampleRate;
+  const length = Math.floor(sampleRate * 4);
+  const buffer = ctx.createBuffer(1, length, sampleRate);
+  const data = buffer.getChannelData(0);
+  let brown = 0;
+  for (let i = 0; i < length; i += 1) {
+    const t = i / sampleRate;
+    brown = (brown + noise(t + 2) * 0.02) * 0.985;
+    const clink = i % Math.floor(sampleRate * 1.7) < 220 ? Math.sin(2 * Math.PI * 980 * t) * Math.exp(-(i % 8000) / 900) * 0.04 : 0;
+    data[i] = Math.max(-1, Math.min(1, brown * 0.7 + clink));
   }
   return buffer;
 }

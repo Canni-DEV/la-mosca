@@ -1,10 +1,15 @@
-# Créditos de assets — Fase 2
+# Créditos y licencia de assets — Fase 3
 
-Todos los assets de presentación de esta fase son originales del proyecto:
+Todos los archivos en este directorio son **arte original** generado para La Mosca. No son escaneos ni copias píxel a píxel de barajas comerciales (Fournier u otras) ni de marcas de bebida.
 
-- Cartas españolas dibujadas en canvas (`apps/web/src/scene/card-art.ts`), inspiradas en el vocabulario visual tradicional sin copiar una baraja comercial.
-- Dorso con motivo de mosca geométrica propio.
-- Textura de mesa y objetos de sobremesa (vaso genérico sin marca, anotador) generados en canvas.
-- SFX generados en el cliente con Web Audio API (`apps/web/src/audio/mixer.ts`).
+## Procedencia
 
-No se enlazan recursos remotos en runtime.
+- Palos, figuras de sota/caballo/rey, dorso, mesa, fondo de bodegón, vaso genérico y anotador: ilustraciones originales encargadas para el proyecto (generación asistida), recortadas y empaquetadas en el build.
+- Composición final de cada naipe (marco, índices 1–12, disposición de palos): código del cliente en `apps/web/src/scene/card-art.ts`.
+- SFX y ambiente: síntesis local con Web Audio API (`apps/web/src/audio/mixer.ts`).
+
+## Uso
+
+Licencia del proyecto. No hay hotlinks ni descargas remotas en runtime.
+
+El vaso oscuro es un fernet con cola **genérico**, sin etiqueta comercial.

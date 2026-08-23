@@ -100,6 +100,24 @@ Este archivo registra decisiones durables. No hace falta crear un ADR separado p
 
 **Razón:** identidad reconocible y licencia clara sin bloquear la fase por un set ilustrado final. La Fase 3 puede reemplazarlos por arte de mayor fidelidad.
 
+## D-021 — Mesa redonda y mazo a la derecha del dealer
+
+**Decisión:** la mesa de juego es oval/redonda. Los 3, 4 o 5 jugadores se sientan a igual paso angular, con el humano abajo. El mazo y el triunfo público viven a la derecha personal de quien reparte, nunca en el centro. El centro queda para la baza.
+
+**Razón:** el feedback de aceptación de la Fase 2 pidió dejar la mesa rectangular, reforzar quién reparte y no mezclar stock con las cartas de la vuelta.
+
+## D-022 — Baraja española ilustrada, empaquetada en el cliente
+
+**Decisión:** los palos, las figuras 10/11/12 y el dorso son ilustraciones originales locales. El compositor de `card-art.ts` arma cada naipe (marco, índices numéricos 1–12 y pips). No se usa hotlink ni copia píxel a píxel de Fournier u otra baraja comercial.
+
+**Razón:** las cartas procedurales de la Fase 2 no distinguían bien 10/11/12. La Fase 3 exige baraja tradicional legible con licencia clara.
+
+## D-023 — Props de bodegón diferidos
+
+**Decisión:** el vaso y el anotador no se renderizan en la mesa hasta cerrar layout, legibilidad de cartas y HUD. Los PNG locales quedan en el repo para una pasada de decoración posterior. No se construyen con HTML.
+
+**Razón:** primero hay que dejar estable el gameplay y la composición; la decoración no debe competir con la mano, el mazo ni el triunfo.
+
 ## Cómo agregar una decisión
 
 Agregar:

@@ -128,3 +128,20 @@ Este checklist crece con las fases. La especificación de cada fase incluye un s
 - [ ] Animaciones no traban input indefinidamente.
 - [ ] Audio puede mutearse.
 - [ ] No hay errores relevantes en consola.
+
+## Presentación Fase 3
+
+- [ ] Primera impresión de videojuego/bodegón, no de app web ni de mesa rectangular.
+- [ ] 3, 4 y 5 jugadores quedan a igual distancia angular, humano abajo.
+- [ ] Mazo y triunfo público a la derecha de quien reparte; el centro solo tiene la baza.
+- [ ] El dealer conserva su 5ª carta en la mano; el triunfo público es otra copia etiquetada.
+- [ ] 10, 11 y 12 se leen como Sota, Caballo y Rey (número grande + figura).
+- [ ] Fernet genérico y anotador son imágenes, no dibujos vectoriales; no tapan HUD ni cartas.
+- [ ] Los montoncitos de bazas quedan como pilas junto al asiento y no desaparecen.
+- [ ] Palito, Mosca y Chupado tienen feedback visual y sonoro distinto.
+- [ ] Cómo jugar cubre jerarquía, palos, Palito y Mosca sin ser un tutorial obligatorio.
+- [ ] Ayudas contextuales discretas en la primera partida; se pueden cerrar y no vuelven.
+- [ ] Desktop usable; tablet/móvil razonable; en chico se reduce decoración antes que cartas.
+- [ ] `prefers-reduced-motion` acorta vuelos y saca el shake.
+- [ ] Salir al menú a mitad de mano no deja ticker/audio/animación colgados.
+- [ ] Mesa de prueba sigue disponible desde el menú.

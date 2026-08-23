@@ -12,11 +12,6 @@
 
   let muted = $state(audioMixer.muted);
 
-  const trump = $derived(
-    view?.trumpSuit
-      ? `Triunfo: ${view.trumpSuit === "OROS" ? "Oros" : view.trumpSuit === "COPAS" ? "Copas" : view.trumpSuit === "ESPADAS" ? "Espadas" : "Bastos"}`
-      : "Triunfo: —",
-  );
   const turnName = $derived(view?.players.find((player) => player.id === view.currentActorId)?.name ?? "—");
   const yourTurn = $derived(Boolean(view && view.currentActorId === view.viewerId));
 
@@ -29,8 +24,7 @@
 <header class="game-hud">
   <div class="hud-cluster">
     <button class="btn btn-ghost" type="button" onclick={onMenu}>Salir</button>
-    <span class="hud-chip">Mano {view?.handNumber ?? "—"}</span>
-    <span class="hud-chip">{trump}</span>
+    <span class="hud-chip plaque">Mano {view?.handNumber ?? "—"}</span>
   </div>
   <div class="hud-cluster">
     <span class="hud-chip" class:turn={yourTurn}>Turno: {turnName}</span>
