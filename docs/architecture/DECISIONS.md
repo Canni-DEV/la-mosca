@@ -90,7 +90,7 @@ Este archivo registra decisiones durables. No hace falta crear un ADR separado p
 
 ## D-019 — Humano fijo en `p1` / asiento inferior
 
-**Decisión:** el jugador humano es siempre `p1`, se sienta abajo y el primer dealer de la partida es ese asiento. Los bots ocupan el resto de asientos, en sentido horario.
+**Decisión:** el jugador humano es siempre `p1`, se sienta abajo y el primer dealer de la partida es ese asiento. Los bots ocupan el resto de asientos de modo que el siguiente en el orden de juego (hacia la derecha) quede a la derecha visual del humano.
 
 **Razón:** simplifica vista filtrada, input y layout Pixi sin perder rotación de dealer entre manos.
 

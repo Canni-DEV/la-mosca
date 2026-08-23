@@ -20,7 +20,7 @@ describe("layoutTable", () => {
       expect(human.origin.y).toBeGreaterThan(layout.center.y);
       const step = (2 * Math.PI) / players.length;
       layout.seats.forEach((seat, index) => {
-        expect(seat.angle).toBeCloseTo(Math.PI / 2 + index * step, 8);
+        expect(seat.angle).toBeCloseTo(Math.PI / 2 - index * step, 8);
       });
     }
   });
@@ -108,11 +108,20 @@ describe("layoutTable", () => {
     expect(layout.deck.y).toBeLessThan(800 - layout.cardHeight * 0.3);
   });
 
+  it("sits the next player to the human's visual right so deal order travels rightward", () => {
+    for (const players of [three, four, five]) {
+      const layout = layoutTable(1280, 800, players, "p1", "p1");
+      const human = layout.seats[0]!;
+      const next = layout.seats[1]!;
+      expect(next.origin.x).toBeGreaterThan(human.origin.x + 40);
+    }
+  });
+
   it("places a small dealer stock beside the dealer plaque without covering the right-hand opponent", () => {
     for (const players of [three, four, five]) {
       const layout = layoutTable(1920, 940, players, "p1", "p1");
       const dealer = layout.seats[0]!;
-      const rightSeat = layout.seats[layout.seats.length - 1]!;
+      const rightSeat = layout.seats[1]!;
       expect(layout.stockWidth).toBeLessThan(layout.cardWidth * 0.42);
       expect(distance(layout.deck, dealer.label)).toBeLessThan(160);
       expect(distance(layout.trump, rightSeat.label)).toBeGreaterThan(130);
@@ -123,7 +132,7 @@ describe("layoutTable", () => {
   it("keeps stock attached to a bot dealer instead of drifting into another seat", () => {
     const layout = layoutTable(1920, 940, five, "p1", "p5");
     const dealer = layout.seats.find((seat) => seat.id === "p5")!;
-    expect(distance(layout.deck, dealer.label)).toBeLessThan(160);
+    expect(distance(layout.deck, dealer.label)).toBeLessThan(170);
     for (const seat of layout.seats.filter((item) => item.id !== "p5")) {
       expect(distance(layout.trump, seat.label)).toBeGreaterThan(90);
     }

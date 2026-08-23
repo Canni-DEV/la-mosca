@@ -72,7 +72,8 @@ export function layoutTable(
   const ordered = [...players.slice(humanIndex), ...players.slice(0, humanIndex)];
   const count = ordered.length;
   const seats: SeatLayout[] = ordered.map((player, index) => {
-    const angle = Math.PI / 2 + (index * 2 * Math.PI) / count;
+    // Canvas Y grows downward, so +angle sits left of the human. Rules go right: seat+1 must sit on screen-right.
+    const angle = Math.PI / 2 - (index * 2 * Math.PI) / count;
     const isHuman = player.id === humanPlayerId;
     const origin = ellipsePoint(center, tableRadiusX, tableRadiusY, angle);
     const radial = { x: Math.cos(angle), y: Math.sin(angle) };
