@@ -332,7 +332,7 @@ export class PixiTable {
     for (const card of view.hand) {
       const key = cardKey(card.id);
       keep.add(key);
-      this.ensureCard(key, layout.cardWidth, layout.cardHeight, card.id, true);
+      this.ensureCard(key, layout.humanCardWidth, layout.humanCardHeight, card.id, true);
     }
     for (const player of view.players) {
       if (player.id === view.viewerId) {
@@ -400,18 +400,18 @@ export class PixiTable {
         if (!sprite) {
           return;
         }
-        const fan = fanOffset(index, view.hand.length, layout.cardWidth * layout.fanSpacing);
+        const fan = fanOffset(index, view.hand.length, layout.humanCardWidth * layout.fanSpacing);
         const selected = this.selectedIds.includes(card.id);
         const legal = view.legalCardIds.length === 0 || view.legalCardIds.includes(card.id);
         const blocked = view.availableActions
           .find((action) => action.type === "EXCHANGE_CARDS")
           ?.blockedCardIds?.includes(card.id);
-        const hoverLift = selected ? -layout.cardHeight * 0.12 : 0;
+        const hoverLift = selected ? -layout.humanCardHeight * 0.12 : 0;
         sprite.position.set(humanSeat.hand.x + fan.x, humanSeat.hand.y + fan.y + hoverLift);
         sprite.rotation = fan.rotation;
         sprite.zIndex = 100 + index;
         sprite.alpha = blocked ? 0.55 : legal ? 1 : 0.82;
-        sprite.setCardSize(layout.cardWidth, layout.cardHeight);
+        sprite.setCardSize(layout.humanCardWidth, layout.humanCardHeight);
         sprite.setFaceUp(true);
         this.bindHumanCard(sprite, card.id);
       });
@@ -564,8 +564,8 @@ export class PixiTable {
       const key = faceUp ? cardKey(event.cardId) : hiddenKey(event.playerId, already);
       const sprite = this.ensureCard(
         key,
-        faceUp ? layout.cardWidth : layout.cardWidth * 0.48,
-        faceUp ? layout.cardHeight : layout.cardHeight * 0.48,
+        faceUp ? layout.humanCardWidth : layout.cardWidth * 0.48,
+        faceUp ? layout.humanCardHeight : layout.cardHeight * 0.48,
         faceUp ? event.cardId : null,
         false,
       );
@@ -573,7 +573,7 @@ export class PixiTable {
       sprite.rotation = 0;
       sprite.alpha = 1;
       sprite.zIndex = 80;
-      const fan = fanOffset(already, 5, faceUp ? layout.cardWidth * layout.fanSpacing : layout.cardWidth * 0.2);
+      const fan = fanOffset(already, 5, faceUp ? layout.humanCardWidth * layout.fanSpacing : layout.cardWidth * 0.2);
       const target = {
         x: seat.hand.x + fan.x,
         y: seat.hand.y + fan.y,
@@ -669,8 +669,8 @@ export class PixiTable {
       const key = faceUp ? cardKey(drawn[i]!) : hiddenKey(playerId, 20 + i);
       const sprite = this.ensureCard(
         key,
-        faceUp ? layout.cardWidth : layout.cardWidth * 0.48,
-        faceUp ? layout.cardHeight : layout.cardHeight * 0.48,
+        faceUp ? layout.humanCardWidth : layout.cardWidth * 0.48,
+        faceUp ? layout.humanCardHeight : layout.cardHeight * 0.48,
         faceUp ? drawn[i]! : null,
         false,
       );

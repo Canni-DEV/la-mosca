@@ -70,7 +70,7 @@ describe("layoutTable", () => {
     ] as const) {
       const layout = layoutTable(width, height, four, "p1", "p1");
       const human = layout.seats[0]!;
-      expect(human.hand.y + layout.cardHeight * 0.52).toBeLessThanOrEqual(height - 4);
+      expect(human.hand.y + layout.humanCardHeight * 0.52).toBeLessThanOrEqual(height - 4);
       expect(human.hand.y).toBeGreaterThan(layout.center.y);
       expect(human.origin.y).toBeLessThan(human.hand.y);
     }
@@ -78,22 +78,23 @@ describe("layoutTable", () => {
 
   it("sizes the human cards large enough to read without covering the table", () => {
     const layout = layoutTable(1280, 800, five, "p1", "p1");
-    expect(layout.cardWidth).toBeGreaterThanOrEqual(148);
-    expect(layout.cardWidth).toBeLessThanOrEqual(200);
-    expect(layout.cardHeight).toBeGreaterThanOrEqual(220);
-    expect(layout.cardHeight).toBeLessThan(800 * 0.36);
-    const fanWidth = layout.cardWidth * (1 + layout.fanSpacing * 4);
+    expect(layout.humanCardWidth).toBeCloseTo(layout.cardWidth * 0.85, 5);
+    expect(layout.humanCardWidth).toBeGreaterThanOrEqual(125);
+    expect(layout.humanCardWidth).toBeLessThanOrEqual(170);
+    expect(layout.humanCardHeight).toBeGreaterThanOrEqual(185);
+    expect(layout.humanCardHeight).toBeLessThan(800 * 0.32);
+    const fanWidth = layout.humanCardWidth * (1 + layout.fanSpacing * 4);
     expect(fanWidth).toBeLessThan(1280 * 0.78);
-    expect(fanWidth).toBeGreaterThan(1280 * 0.4);
+    expect(fanWidth).toBeGreaterThan(1280 * 0.32);
   });
 
   it("keeps a readable hand on a 1920 desktop without stacking over the table", () => {
     const layout = layoutTable(1920, 940, five, "p1", "p1");
-    expect(layout.cardWidth).toBeGreaterThanOrEqual(165);
-    expect(layout.cardWidth).toBeLessThanOrEqual(200);
-    expect(layout.cardHeight).toBeLessThan(940 * 0.34);
+    expect(layout.humanCardWidth).toBeGreaterThanOrEqual(140);
+    expect(layout.humanCardWidth).toBeLessThanOrEqual(170);
+    expect(layout.humanCardHeight).toBeLessThan(940 * 0.3);
     const human = layout.seats[0]!;
-    const cardTop = human.hand.y - layout.cardHeight * 0.5;
+    const cardTop = human.hand.y - layout.humanCardHeight * 0.5;
     const tableBottom = layout.center.y + layout.tableRadiusY;
     expect(tableBottom).toBeLessThan(cardTop - 8);
     expect(human.label.y).toBeLessThan(cardTop - 24);

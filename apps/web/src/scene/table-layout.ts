@@ -30,6 +30,8 @@ export interface TableLayout {
   seats: SeatLayout[];
   cardWidth: number;
   cardHeight: number;
+  humanCardWidth: number;
+  humanCardHeight: number;
   fanSpacing: number;
   stockWidth: number;
   stockHeight: number;
@@ -38,6 +40,7 @@ export interface TableLayout {
 
 const CARD_ASPECT = 319 / 208;
 const HAND_HEIGHT_RATIO = 0.3;
+const HUMAN_CARD_SCALE = 0.75;
 const MAX_FAN_WIDTH_RATIO = 0.66;
 const MIN_FAN_SPACING = 0.62;
 const MAX_FAN_SPACING = 0.78;
@@ -61,12 +64,14 @@ export function layoutTable(
   const heightForHand = (height * HAND_HEIGHT_RATIO) / CARD_ASPECT;
   const cardWidth = clamp(Math.min(widthForFive, heightForHand), MIN_CARD_WIDTH, MAX_CARD_WIDTH);
   const cardHeight = cardWidth * CARD_ASPECT;
+  const humanCardWidth = cardWidth * HUMAN_CARD_SCALE;
+  const humanCardHeight = cardHeight * HUMAN_CARD_SCALE;
   const fanSpacing = clamp((maxFanWidth / cardWidth - 1) / 4, MIN_FAN_SPACING, MAX_FAN_SPACING);
-  const humanHandY = height - cardHeight * 0.52 - 10;
-  const tableBottom = humanHandY - cardHeight * 0.7;
-  const tableTop = Math.max(height * 0.06, cardHeight * 0.16);
+  const humanHandY = height - humanCardHeight * 0.52 - 8;
+  const tableBottom = humanHandY - humanCardHeight * 0.7;
+  const tableTop = Math.max(height * 0.05, cardHeight * 0.12);
   const tableRadiusY = Math.max(90, (tableBottom - tableTop) / 2);
-  const tableRadiusX = Math.min(width * 0.45, tableRadiusY * 1.72);
+  const tableRadiusX = Math.min(width * 0.47, tableRadiusY * 1.78);
   const center = { x: width * 0.5, y: tableTop + tableRadiusY };
   const humanIndex = Math.max(0, players.findIndex((player) => player.id === humanPlayerId));
   const ordered = [...players.slice(humanIndex), ...players.slice(0, humanIndex)];
@@ -97,7 +102,7 @@ export function layoutTable(
       },
       label: {
         x: origin.x - radial.x * (isHuman ? 0 : cardWidth * 0.28),
-        y: isHuman ? origin.y - 40 : origin.y - radial.y * 18 + 4,
+        y: isHuman ? origin.y - 48 : origin.y - radial.y * 18 + 4,
       },
       rotation: isHuman ? 0 : angle - Math.PI / 2,
     };
@@ -118,13 +123,15 @@ export function layoutTable(
     tableRadiusY,
     humanZone: {
       x: width * 0.12,
-      y: humanHandY - cardHeight * 0.72,
+      y: humanHandY - humanCardHeight * 0.72,
       width: width * 0.76,
-      height: height - (humanHandY - cardHeight * 0.72),
+      height: height - (humanHandY - humanCardHeight * 0.72),
     },
     seats,
     cardWidth,
     cardHeight,
+    humanCardWidth,
+    humanCardHeight,
     fanSpacing,
     stockWidth,
     stockHeight,
