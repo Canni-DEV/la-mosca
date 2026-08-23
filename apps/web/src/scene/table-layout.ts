@@ -36,7 +36,7 @@ export interface TableLayout {
   stockRotation: number;
 }
 
-const CARD_ASPECT = 1.54;
+const CARD_ASPECT = 319 / 208;
 const HAND_HEIGHT_RATIO = 0.3;
 const MAX_FAN_WIDTH_RATIO = 0.66;
 const MIN_FAN_SPACING = 0.62;

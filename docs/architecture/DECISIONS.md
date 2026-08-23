@@ -106,11 +106,11 @@ Este archivo registra decisiones durables. No hace falta crear un ADR separado p
 
 **Razón:** el feedback de aceptación de la Fase 2 pidió dejar la mesa rectangular, reforzar quién reparte y no mezclar stock con las cartas de la vuelta.
 
-## D-022 — Baraja española ilustrada, empaquetada en el cliente
+## D-022 — Baraja española de atlas CC BY-SA, empaquetada en el cliente
 
-**Decisión:** los palos, las figuras 10/11/12 y el dorso son ilustraciones originales locales. El compositor de `card-art.ts` arma cada naipe (marco, índices numéricos 1–12 y pips). No se usa hotlink ni copia píxel a píxel de Fournier u otra baraja comercial.
+**Decisión:** los naipes 1–12 de cada palo y el dorso se recortan de `spanish-deck-atlas.png` (Baraja española completa, Wikimedia Commons, CC BY-SA 3.0, autor Basquetteur). El compositor no genera palos ni figuras. No hay hotlink: el PNG viaja en el build. La carta en blanco del atlas no se usa.
 
-**Razón:** las cartas procedurales de la Fase 2 no distinguían bien 10/11/12. La Fase 3 exige baraja tradicional legible con licencia clara.
+**Razón:** el set generado internamente no tenía el aspecto de baraja española conocida. Este atlas es el vocabulario visual habitual, con licencia explícita y atribución.
 
 ## D-023 — Props de bodegón diferidos
 

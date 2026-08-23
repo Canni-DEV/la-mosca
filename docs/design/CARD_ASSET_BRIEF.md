@@ -34,9 +34,9 @@ Conservar:
 
 ## Restricción de propiedad intelectual
 
-“Aspecto original/tradicional” **no significa copiar píxel por píxel una baraja comercial**.
+“Aspecto original/tradicional” **no significa copiar píxel por píxel una baraja comercial** (Fournier u otras).
 
-Crear arte propio que respete el vocabulario visual histórico de la baraja española o usar un set con licencia inequívoca.
+El cliente usa el atlas CC BY-SA 3.0 *Baraja española completa* (Wikimedia Commons, Basquetteur), empaquetado en el build, con atribución en `apps/web/src/assets/CREDITS.md`.
 
 No incluir marcas comerciales de fabricantes.
 

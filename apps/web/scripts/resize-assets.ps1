@@ -40,16 +40,7 @@ function Resize-Image {
 }
 
 $c = "C:\Code\la-mosca\apps\web\src\assets"
-Resize-Image "$c\cards\pip-oros.png" "$c\cards\pip-oros.png" 256 256 $false
-Resize-Image "$c\cards\pip-copas.png" "$c\cards\pip-copas.png" 256 256 $false
-Resize-Image "$c\cards\pip-espadas.png" "$c\cards\pip-espadas.png" 256 256 $false
-Resize-Image "$c\cards\pip-bastos.png" "$c\cards\pip-bastos.png" 256 256 $false
-Resize-Image "$c\cards\card-back.png" "$c\cards\card-back.png" 300 462 $false
-foreach ($s in @("oros", "copas", "espadas", "bastos")) {
-  foreach ($f in @("sota", "caballo", "rey")) {
-    Resize-Image "$c\cards\court-$s-$f.png" "$c\cards\court-$s-$f.png" 420 560 $false
-  }
-}
+# Card faces come from the Wikimedia atlas at native resolution; do not resample.
 Resize-Image "$c\props\prop-fernet.png" "$c\props\fernet.png" 420 420 $false
 Resize-Image "$c\props\prop-notepad.png" "$c\props\notepad.png" 420 420 $false
 Resize-Image "$c\table\table-wood.png" "$c\table\wood.jpg" 1024 1024 $true
