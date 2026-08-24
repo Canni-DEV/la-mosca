@@ -19,6 +19,10 @@ Mesa, fondo de bodegón, vaso genérico y anotador: ilustraciones originales enc
 
 SFX y ambiente: síntesis local con Web Audio API (`apps/web/src/audio/mixer.ts`).
 
+## Guía ilustrada
+
+`guia-ilustrada/0_Mosca.png` … `3_Mosca.png` y `La_Mosca_Guia_Ilustrada.pdf`: material original del proyecto para Cómo jugar.
+
 ## Uso
 
 No hay hotlinks ni descargas remotas en runtime.

@@ -46,6 +46,15 @@ button:disabled {
   min-height: 100vh;
 }
 
+html:has(.guide-screen),
+body:has(.guide-screen),
+#app:has(.guide-screen) {
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .screen {
   min-height: 100vh;
   display: grid;
@@ -142,29 +151,195 @@ button:disabled {
   min-width: 0;
 }
 
-.howto {
+.screen.guide-screen {
+  height: 100dvh;
+  min-height: 0;
+  max-height: 100dvh;
+  overflow: hidden;
+  align-content: stretch;
+  padding: 8px 12px 10px;
+}
+
+.guide {
   width: min(720px, 100%);
+  height: 100%;
+  min-height: 0;
   display: grid;
-  gap: 16px;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  justify-items: center;
+  gap: 6px;
 }
 
-.howto article {
-  background: rgba(26, 16, 11, 0.72);
-  border: 1px solid #6b4b32;
-  border-radius: 14px;
-  padding: 16px 18px;
+.guide-head {
+  text-align: center;
 }
 
-.howto h2,
-.howto h1 {
+.guide-title {
+  margin: 0;
   font-family: var(--font-display);
-  margin: 0 0 8px;
+  font-size: clamp(22px, 3.4vh, 28px);
+  letter-spacing: 0.04em;
+  color: var(--gold-bright);
 }
 
-.howto p,
-.howto li {
-  line-height: 1.5;
+.guide-kicker {
+  margin: 2px 0 0;
+  font-size: 12px;
   color: var(--cream-dim);
+}
+
+.book-frame {
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  container-type: size;
+  display: grid;
+  place-items: center;
+}
+
+.book {
+  position: relative;
+  width: min(100cqw, calc(100cqh * 1055 / 1491));
+  height: min(100cqh, calc(100cqw * 1491 / 1055));
+  overflow: hidden;
+  perspective: 1800px;
+  transform-style: preserve-3d;
+  touch-action: none;
+  user-select: none;
+  border-radius: 4px 12px 12px 6px;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.4),
+    6px 0 12px rgba(0, 0, 0, 0.16);
+  background: #c4b392;
+  cursor: ew-resize;
+}
+
+.book.busy {
+  cursor: progress;
+}
+
+.book-spine {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 10px;
+  z-index: 50;
+  pointer-events: none;
+  border-radius: 4px 0 0 6px;
+  background: linear-gradient(90deg, #2a1810 0%, #5a3a24 55%, rgba(90, 58, 36, 0.15) 100%);
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.28);
+}
+
+.leaf {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transition: transform 0.72s cubic-bezier(0.66, 0.08, 0.34, 1);
+}
+
+.leaf.flipped {
+  transform: rotateY(-180deg);
+}
+
+.leaf-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.leaf-front {
+  background: #efe2c6;
+}
+
+.leaf-front img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.leaf-back {
+  transform: rotateY(180deg);
+  background:
+    linear-gradient(90deg, rgba(80, 48, 24, 0.18), transparent 12%),
+    repeating-linear-gradient(90deg, #e8d7b0 0 2px, #f0e2c4 2px 7px);
+}
+
+.guide-caption {
+  margin: 0;
+  font-family: var(--font-display);
+  color: var(--gold-bright);
+  font-size: 12px;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.guide-nav,
+.guide-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  max-width: 100%;
+}
+
+.guide-pager {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+
+.guide-btn,
+.guide-page-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 7px;
+  line-height: 1.2;
+}
+
+.guide-page-btn {
+  padding: 2px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+}
+
+.guide-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.guide-dot {
+  width: 7px;
+  height: 7px;
+  margin: 0 1px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--gold);
+  background: transparent;
+  position: relative;
+}
+
+.guide-dot::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+}
+
+.guide-dot.current {
+  background: var(--gold-bright);
+  border-color: var(--gold-bright);
+}
+
+.guide-actions .btn {
+  text-decoration: none;
+  text-align: center;
+  display: inline-block;
 }
 
 .table-screen {
@@ -444,6 +619,10 @@ button:disabled {
 @media (max-width: 640px) {
   .screen {
     padding: 20px 12px 32px;
+  }
+
+  .screen.guide-screen {
+    padding: 6px 10px 8px;
   }
 
   .hud-chip {

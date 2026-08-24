@@ -140,7 +140,7 @@ Este checklist crece con las fases. La especificación de cada fase incluye un s
 - [ ] Fernet genérico y anotador son imágenes, no dibujos vectoriales; no tapan HUD ni cartas.
 - [ ] Los montoncitos de bazas quedan como pilas junto al asiento y no desaparecen.
 - [ ] Palito, Mosca y Chupado tienen feedback visual y sonoro distinto.
-- [ ] Cómo jugar cubre jerarquía, palos, Palito y Mosca sin ser un tutorial obligatorio.
+- [ ] Cómo jugar muestra la guía ilustrada (páginas 0–3) con pasaje tipo libro y permite descargar el PDF.
 - [ ] Ayudas contextuales discretas en la primera partida; se pueden cerrar y no vuelven.
 - [ ] Desktop usable; tablet/móvil razonable; en chico se reduce decoración antes que cartas.
 - [ ] `prefers-reduced-motion` acorta vuelos y saca el shake.

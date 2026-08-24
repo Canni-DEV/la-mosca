@@ -145,13 +145,4 @@ Opciones:
 
 ## Cómo jugar
 
-Debe estar basado en `docs/game/RULES.md`, pero presentado de manera progresiva:
-
-- objetivo;
-- triunfo;
-- jerarquía;
-- seguir palo y superar;
-- pasar/cambiar;
-- Mosca/chupado/palito.
-
-No obligar al jugador a leer todo antes de comenzar.
+Visor de la guía ilustrada (4 páginas) con pasaje tipo libro y descarga del PDF completo. No es un tutorial obligatorio antes de jugar.
