@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { AppScreen, MatchSetup } from "./app/navigation.ts";
+  import { DEFAULT_HUMAN_NAME } from "./game/LocalGameSession.ts";
   import { unlockAudio } from "./game/match-controller.ts";
   import HowToPlayScreen from "./screens/HowToPlayScreen.svelte";
   import MenuScreen from "./screens/MenuScreen.svelte";
@@ -15,6 +16,7 @@
     playerCount: 4,
     deckConfiguration: "TRADITIONAL_40",
     seed: 1,
+    humanName: DEFAULT_HUMAN_NAME,
   });
   let tableKey = $state(0);
 

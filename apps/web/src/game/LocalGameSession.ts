@@ -15,6 +15,13 @@ import { chooseAdvance } from "./session-advance.ts";
 import type { AdvanceResult, GameSession, Unsubscribe } from "./session.ts";
 
 export const HUMAN_PLAYER_ID: PlayerId = "p1";
+export const DEFAULT_HUMAN_NAME = "Vos";
+export const HUMAN_NAME_MAX_LENGTH = 16;
+
+export function sanitizeHumanName(raw: string): string {
+  const name = raw.trim().replace(/\s+/g, " ").slice(0, HUMAN_NAME_MAX_LENGTH);
+  return name.length > 0 ? name : DEFAULT_HUMAN_NAME;
+}
 
 export interface SessionConfig {
   seed: number;
@@ -169,7 +176,7 @@ function createPlayers(config: SessionConfig): PlayerSetup[] {
   return Array.from({ length: config.playerCount }, (_, index) => {
     const id = `p${index + 1}`;
     if (humanId === id) {
-      return { id, name: config.humanName ?? "Vos" };
+      return { id, name: sanitizeHumanName(config.humanName ?? DEFAULT_HUMAN_NAME) };
     }
     return { id, name: humanId === null ? `Bot ${index + 1}` : botName(index - 1) };
   });

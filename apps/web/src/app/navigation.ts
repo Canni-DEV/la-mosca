@@ -6,6 +6,7 @@ export interface MatchSetup {
   playerCount: 3 | 4 | 5;
   deckConfiguration: DeckConfiguration;
   seed: number;
+  humanName: string;
 }
 
 export interface VictoryInfo {

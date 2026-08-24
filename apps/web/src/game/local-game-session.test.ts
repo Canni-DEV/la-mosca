@@ -56,6 +56,26 @@ describe("LocalGameSession", () => {
     );
   });
 
+  it("uses a custom human name when provided", () => {
+    const session = new LocalGameSession({
+      seed: 21,
+      playerCount: 3,
+      deckConfiguration: "TRADITIONAL_40",
+      humanName: "  Cacho   ",
+    });
+    expect(session.getViewState().players[0]?.name).toBe("Cacho");
+  });
+
+  it("falls back to Vos when the custom name is blank", () => {
+    const session = new LocalGameSession({
+      seed: 21,
+      playerCount: 3,
+      deckConfiguration: "TRADITIONAL_40",
+      humanName: "   ",
+    });
+    expect(session.getViewState().players[0]?.name).toBe("Vos");
+  });
+
   it("waits for the human and rejects bot-impersonating commands", () => {
     const session = new LocalGameSession({
       seed: 8,

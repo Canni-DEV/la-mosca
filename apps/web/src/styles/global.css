@@ -129,12 +129,17 @@ button:disabled {
   font-size: 14px;
 }
 
-.field select {
+.field select,
+.field input {
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--gold);
   background: var(--wood);
   color: var(--cream);
+}
+
+.field input {
+  min-width: 0;
 }
 
 .howto {
