@@ -3,6 +3,7 @@
   import type { DeckConfiguration } from "@la-mosca/game-protocol";
   import type { MatchSetup } from "../app/navigation.ts";
   import { DEFAULT_HUMAN_NAME, HUMAN_NAME_MAX_LENGTH, sanitizeHumanName } from "../game/LocalGameSession.ts";
+  import Wordmark from "../components/Wordmark.svelte";
 
   let {
     initial,
@@ -30,7 +31,8 @@
 
 <main class="screen">
   <div class="screen-card stack">
-    <h1 class="brand" style="font-size: 42px;">Nueva partida</h1>
+    <Wordmark compact />
+    <p class="eyebrow">Nueva partida</p>
     <p class="hint">Un humano contra bots. El mazo de 40 es el tradicional; el de 48 agrega 8 y 9.</p>
     <label class="field">
       Tu nombre

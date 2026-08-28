@@ -1,6 +1,6 @@
 import type { DeckConfiguration } from "@la-mosca/game-protocol";
 
-export type AppScreen = "menu" | "setup" | "howto" | "options" | "table" | "victory" | "playground";
+export type AppScreen = "menu" | "setup" | "howto" | "options" | "credits" | "table" | "victory" | "playground";
 
 export interface MatchSetup {
   playerCount: 3 | 4 | 5;

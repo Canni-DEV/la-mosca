@@ -1,24 +1,43 @@
+import shuffleUrl from "../assets/audio/foley/shuffle.wav";
+import cutUrl from "../assets/audio/foley/cut.wav";
+import contact1Url from "../assets/audio/foley/card-contact-1.wav";
+import contact2Url from "../assets/audio/foley/card-contact-2.wav";
+
 const STORAGE_KEY = "la-mosca.audio";
 
 export interface AudioSettings {
   muted: boolean;
-  volume: number;
+  masterVolume: number;
+  sfxVolume: number;
+  ambienceVolume: number;
 }
 
 function loadSettings(): AudioSettings {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return { muted: false, volume: 0.7 };
-    }
-    const parsed = JSON.parse(raw) as Partial<AudioSettings>;
+    return parseAudioSettings(localStorage.getItem(STORAGE_KEY));
+  } catch {
+    return defaultAudioSettings();
+  }
+}
+
+export function parseAudioSettings(raw: string | null): AudioSettings {
+  if (!raw) return defaultAudioSettings();
+  try {
+    const parsed = JSON.parse(raw) as Partial<AudioSettings> & { volume?: number };
+    const legacy = typeof parsed.volume === "number" ? clampVolume(parsed.volume) : null;
     return {
       muted: Boolean(parsed.muted),
-      volume: clampVolume(typeof parsed.volume === "number" ? parsed.volume : 0.7),
+      masterVolume: clampVolume(parsed.masterVolume ?? legacy ?? 0.75),
+      sfxVolume: clampVolume(parsed.sfxVolume ?? 0.9),
+      ambienceVolume: clampVolume(parsed.ambienceVolume ?? 0.45),
     };
   } catch {
-    return { muted: false, volume: 0.7 };
+    return defaultAudioSettings();
   }
+}
+
+function defaultAudioSettings(): AudioSettings {
+  return { muted: false, masterVolume: 0.75, sfxVolume: 0.9, ambienceVolume: 0.45 };
 }
 
 function clampVolume(value: number): number {
@@ -128,18 +147,35 @@ export class AudioMixer {
   private settings: AudioSettings = loadSettings();
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
+  private sfxBus: GainNode | null = null;
+  private ambienceBus: GainNode | null = null;
   private buffers = new Map<CueName, AudioBuffer[]>();
+  private foleyReady: Promise<void> | null = null;
   private listeners = new Set<() => void>();
   private variant = 0;
   private ambience: AudioBufferSourceNode | null = null;
-  private ambienceGain: GainNode | null = null;
+  private ambienceRequested = false;
+  private activeSources = new Set<AudioBufferSourceNode>();
+  private timers = new Set<number>();
 
   get muted(): boolean {
     return this.settings.muted;
   }
 
   get volume(): number {
-    return this.settings.volume;
+    return this.settings.masterVolume;
+  }
+
+  get masterVolume(): number {
+    return this.settings.masterVolume;
+  }
+
+  get sfxVolume(): number {
+    return this.settings.sfxVolume;
+  }
+
+  get ambienceVolume(): number {
+    return this.settings.ambienceVolume;
   }
 
   subscribe(listener: () => void): () => void {
@@ -152,13 +188,32 @@ export class AudioMixer {
     this.persist();
     this.applyGain();
     this.emit();
+    if (!muted && this.ambienceRequested) this.startAmbience();
   }
 
   setVolume(volume: number): void {
-    this.settings = { ...this.settings, volume: clampVolume(volume) };
-    if (this.settings.volume === 0) {
+    this.setMasterVolume(volume);
+  }
+
+  setMasterVolume(volume: number): void {
+    this.settings = { ...this.settings, masterVolume: clampVolume(volume) };
+    if (this.settings.masterVolume === 0) {
       this.settings = { ...this.settings, muted: true };
     }
+    this.persist();
+    this.applyGain();
+    this.emit();
+  }
+
+  setSfxVolume(volume: number): void {
+    this.settings = { ...this.settings, sfxVolume: clampVolume(volume) };
+    this.persist();
+    this.applyGain();
+    this.emit();
+  }
+
+  setAmbienceVolume(volume: number): void {
+    this.settings = { ...this.settings, ambienceVolume: clampVolume(volume) };
     this.persist();
     this.applyGain();
     this.emit();
@@ -173,17 +228,17 @@ export class AudioMixer {
     if (ctx.state === "suspended") {
       await ctx.resume();
     }
-    this.ensureBuffers();
+    await this.ensureBuffers();
   }
 
   play(cue: CueName): void {
-    if (this.settings.muted || this.settings.volume <= 0) {
+    if (this.settings.muted || this.settings.masterVolume <= 0 || this.settings.sfxVolume <= 0) {
       return;
     }
     void this.unlock().then(() => {
       const ctx = this.ctx;
-      const master = this.master;
-      if (!ctx || !master) {
+      const sfxBus = this.sfxBus;
+      if (!ctx || !sfxBus) {
         return;
       }
       const variants = this.buffers.get(cue);
@@ -194,50 +249,64 @@ export class AudioMixer {
       }
       const source = ctx.createBufferSource();
       source.buffer = buffer;
-      source.connect(master);
+      source.connect(sfxBus);
+      this.activeSources.add(source);
+      source.addEventListener("ended", () => this.activeSources.delete(source), { once: true });
       source.start();
     });
   }
 
   playPass(): void {
     this.play("knock");
-    window.setTimeout(() => this.play("knock"), 120);
+    const timer = window.setTimeout(() => {
+      this.timers.delete(timer);
+      this.play("knock");
+    }, 120);
+    this.timers.add(timer);
   }
 
   startAmbience(): void {
+    this.ambienceRequested = true;
     if (this.settings.muted || this.ambience) {
       return;
     }
     void this.unlock().then(() => {
       const ctx = this.ctx;
-      const master = this.master;
-      if (!ctx || !master || this.ambience) {
+      const ambienceBus = this.ambienceBus;
+      if (!ctx || !ambienceBus || this.ambience) {
         return;
       }
-      const gain = ctx.createGain();
-      gain.gain.value = 0.045;
-      gain.connect(master);
       const source = ctx.createBufferSource();
       source.buffer = renderAmbience(ctx);
       source.loop = true;
-      source.connect(gain);
+      source.connect(ambienceBus);
       source.start();
       this.ambience = source;
-      this.ambienceGain = gain;
     });
   }
 
   stopAmbience(): void {
+    this.ambienceRequested = false;
     try {
       this.ambience?.stop();
     } catch {
       // already stopped
     }
     this.ambience = null;
-    this.ambienceGain = null;
+  }
+
+  stopAll(): void {
+    this.stopAmbience();
+    for (const source of this.activeSources) {
+      try { source.stop(); } catch { /* already stopped */ }
+    }
+    this.activeSources.clear();
+    for (const timer of this.timers) window.clearTimeout(timer);
+    this.timers.clear();
   }
 
   destroy(): void {
+    this.stopAll();
     this.listeners.clear();
   }
 
@@ -245,17 +314,24 @@ export class AudioMixer {
     if (!this.ctx) {
       const ctx = new AudioContext();
       const master = ctx.createGain();
+      const sfxBus = ctx.createGain();
+      const ambienceBus = ctx.createGain();
+      sfxBus.connect(master);
+      ambienceBus.connect(master);
       master.connect(ctx.destination);
       this.ctx = ctx;
       this.master = master;
+      this.sfxBus = sfxBus;
+      this.ambienceBus = ambienceBus;
       this.applyGain();
     }
     return this.ctx;
   }
 
-  private ensureBuffers(): void {
+  private async ensureBuffers(): Promise<void> {
     const ctx = this.ensureContext();
     if (this.buffers.size > 0) {
+      await this.foleyReady;
       return;
     }
     (Object.keys(CUES) as CueName[]).forEach((name) => {
@@ -267,13 +343,33 @@ export class AudioMixer {
       }
       this.buffers.set(name, list);
     });
+    this.foleyReady = this.loadFoley(ctx);
+    await this.foleyReady;
+  }
+
+  private async loadFoley(ctx: AudioContext): Promise<void> {
+    try {
+      const [shuffle, cut, contact1, contact2] = await Promise.all([
+        decode(ctx, shuffleUrl), decode(ctx, cutUrl), decode(ctx, contact1Url), decode(ctx, contact2Url),
+      ]);
+      this.buffers.set("shuffle", [shuffle]);
+      this.buffers.set("cut", [cut]);
+      this.buffers.set("deal", [contact1, contact2]);
+      this.buffers.set("place", [contact1, contact2]);
+      this.buffers.set("throw", [contact2]);
+      this.buffers.set("collect", [shuffle, contact2]);
+    } catch {
+      // The synthesized buffers above remain a complete offline-safe fallback.
+    }
   }
 
   private applyGain(): void {
     if (!this.master) {
       return;
     }
-    this.master.gain.value = this.settings.muted ? 0 : this.settings.volume;
+    this.master.gain.value = this.settings.muted ? 0 : this.settings.masterVolume;
+    if (this.sfxBus) this.sfxBus.gain.value = this.settings.sfxVolume;
+    if (this.ambienceBus) this.ambienceBus.gain.value = this.settings.ambienceVolume * 0.1;
   }
 
   private persist(): void {
@@ -289,6 +385,12 @@ export class AudioMixer {
       listener();
     }
   }
+}
+
+async function decode(ctx: AudioContext, url: string): Promise<AudioBuffer> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Could not load audio: ${url}`);
+  return ctx.decodeAudioData(await response.arrayBuffer());
 }
 
 function renderCue(ctx: AudioContext, spec: CueSpec, variant: number): AudioBuffer {

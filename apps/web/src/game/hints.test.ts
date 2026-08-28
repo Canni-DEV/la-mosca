@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { dismissHint, nextHint } from "./hints.ts";
+import { beginHintSession, dismissHint, nextHint } from "./hints.ts";
 
 const memory = new Map<string, string>();
 
@@ -26,6 +26,10 @@ afterEach(() => {
 });
 
 describe("nextHint", () => {
+  it("enables coach marks for the first match only", () => {
+    expect(beginHintSession()).toBe(true);
+    expect(beginHintSession()).toBe(false);
+  });
   it("offers trump first, then exchange, then follow", () => {
     expect(
       nextHint({

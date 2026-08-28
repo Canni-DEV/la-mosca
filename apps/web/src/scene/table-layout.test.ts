@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dealerRightVector, layoutTable } from "./table-layout.ts";
+import { computeTableLayout, dealerRightVector, layoutTable } from "./table-layout.ts";
 
 const three = [
   { id: "p1", name: "Vos" },
@@ -10,6 +10,37 @@ const four = [...three, { id: "p4", name: "Mabel" }];
 const five = [...four, { id: "p5", name: "Rulo" }];
 
 describe("layoutTable", () => {
+  it.each([
+    [1920, 1080], [1366, 768], [1280, 800], [1024, 768], [844, 390], [390, 844], [360, 640],
+  ] as const)("keeps critical anchors safe at %sx%s for 3, 4 and 5 players", (width, height) => {
+    for (const players of [three, four, five]) {
+      const layout = computeTableLayout({ width, height, players, humanPlayerId: "p1", dealerPlayerId: players.at(-1)!.id });
+      const safe = layout.safeArea;
+      const inside = (point: { x: number; y: number }): void => {
+        expect(point.x).toBeGreaterThanOrEqual(safe.x - 0.1);
+        expect(point.x).toBeLessThanOrEqual(safe.x + safe.width + 0.1);
+        expect(point.y).toBeGreaterThanOrEqual(safe.y - 0.1);
+        expect(point.y).toBeLessThanOrEqual(safe.y + safe.height + 0.1);
+      };
+      layout.seats.forEach((seat) => inside(seat.hud));
+      inside(layout.deck);
+      inside(layout.trump);
+      const handHalfWidth = layout.humanCardWidth * 0.5 + layout.humanCardWidth * layout.fanSpacing * 2;
+      expect(layout.center.x - handHalfWidth).toBeGreaterThanOrEqual(safe.x - 1);
+      expect(layout.center.x + handHalfWidth).toBeLessThanOrEqual(safe.x + safe.width + 1);
+      const stockFromCenter = distance(layout.deck, layout.center);
+      expect(stockFromCenter).toBeGreaterThan(layout.stockWidth);
+    }
+  });
+
+  it("uses closed responsive modes including portrait without forcing rotation", () => {
+    expect(layoutTable(1920, 1080, four, "p1").mode).toBe("desktopWide");
+    expect(layoutTable(1280, 800, four, "p1").mode).toBe("desktopCompact");
+    expect(layoutTable(1024, 768, four, "p1").mode).toBe("desktopCompact");
+    expect(layoutTable(844, 390, four, "p1").mode).toBe("mobileLandscape");
+    expect(layoutTable(390, 844, four, "p1").mode).toBe("mobilePortrait");
+    expect(layoutTable(360, 640, four, "p1").mode).toBe("mobilePortrait");
+  });
   it("sits the human at the bottom and spaces 3, 4 and 5 players evenly", () => {
     for (const players of [three, four, five]) {
       const layout = layoutTable(1280, 800, players, "p1", "p1");

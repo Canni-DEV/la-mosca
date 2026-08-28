@@ -6,7 +6,7 @@ La Mosca debe verse como un **videojuego de cartas con identidad argentina**, no
 
 La referencia conceptual es una mesa de **bar/bodegón argentino**: madera gastada, luz cálida, sobremesa, objetos cotidianos y una sensación de lugar vivido.
 
-La estética debe ser **estilizada y premium**, no fotorrealista, no caricaturesca infantil y no kitsch.
+La estética es una **ilustración editorial setentista**, nocturna, íntima y sofisticada: no fotorrealista, no caricaturesca infantil y no kitsch.
 
 ## 2. Escena principal
 
@@ -20,6 +20,8 @@ Características:
 - iluminación cálida desde arriba;
 - sombras suaves de cartas y objetos;
 - bordes del entorno sugeridos, no necesariamente una habitación 3D completa.
+- mesa ocupando 75–85% de la composición;
+- ninguna silla fija en el arte: los 3–5 asientos son dinámicos.
 
 ## 3. Objetos ambientales
 
@@ -53,25 +55,21 @@ Evitar explícitamente:
 - estética medieval/fantasy;
 - assets de casino genéricos de stock.
 
-## 5. Paleta conceptual
+## 5. Paleta fija
 
-No es necesario fijar hexadecimales rígidos al inicio, pero la paleta debe respetar:
-
-- marrones cálidos de madera;
-- crema/marfil de cartas y papel;
-- rojo apagado/bordó para énfasis;
-- verde botella muy oscuro como acento secundario posible;
-- amarillo cálido de iluminación;
-- tinta negra/gris carbón para texto.
+- noche `#120B08`;
+- madera `#4A2D1B`;
+- crema `#F2E4C7`;
+- bordó primario `#7A302C`;
+- verde botella `#243B2C`;
+- latón `#C6A46A`;
+- tinta `#21160F`.
 
 El color del palo de triunfo puede tener un acento visual, pero no recolorear las cartas.
 
 ## 6. Tipografía
 
-Combinar:
-
-- una tipografía display con personalidad para títulos/logotipo;
-- una sans legible para controles, scores y tutorial.
+Combinar Fraunces para marca/títulos y Archivo para controles, scores y lectura funcional. Ambas viajan localmente.
 
 La display puede tomar inspiración de cartelería de bar, imprenta o menú tradicional, sin caer en lettering ilegible.
 
@@ -104,7 +102,7 @@ Cada asiento debe comunicar:
 - dealer cuando corresponde;
 - cantidad de cartas restantes.
 
-La identidad del bot puede representarse con nombre y avatar ilustrado simple, pero no es requisito inicial. Si se usan avatares, mantener estilo coherente y no robar protagonismo a las cartas.
+No se usan avatares: nombre, ticket, score y estado alcanzan para identificar cada asiento sin competir con las cartas.
 
 ## 9. Triunfo y palo de salida
 

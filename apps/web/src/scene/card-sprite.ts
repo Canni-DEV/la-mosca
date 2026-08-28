@@ -6,6 +6,7 @@ export class CardSprite extends Container {
   readonly face: Sprite;
   readonly back: Sprite;
   readonly shadow: Graphics;
+  readonly emphasis: Graphics;
   cardId: CardId | null;
   faceUp: boolean;
 
@@ -14,6 +15,7 @@ export class CardSprite extends Container {
     this.cardId = cardId;
     this.faceUp = faceUp;
     this.shadow = new Graphics();
+    this.emphasis = new Graphics();
     this.back = new Sprite(getBackTexture());
     this.face = new Sprite(cardId ? getFaceTexture(cardId) : getBackTexture());
     for (const sprite of [this.back, this.face]) {
@@ -22,7 +24,7 @@ export class CardSprite extends Container {
       sprite.height = height;
     }
     this.drawShadow(width, height);
-    this.addChild(this.shadow, this.back, this.face);
+    this.addChild(this.shadow, this.back, this.face, this.emphasis);
     this.eventMode = "static";
     this.cursor = "pointer";
     this.applyFace();
@@ -34,6 +36,7 @@ export class CardSprite extends Container {
     this.face.width = width;
     this.face.height = height;
     this.drawShadow(width, height);
+    this.drawEmphasis(width, height);
   }
 
   reveal(cardId: CardId): void {
@@ -48,10 +51,24 @@ export class CardSprite extends Container {
     this.applyFace();
   }
 
+  setEmphasis(options: { recommended?: boolean; focused?: boolean; selected?: boolean }): void {
+    const tint = options.focused ? 0xf2e4c7 : options.selected ? 0xc6a46a : 0xa9c4a7;
+    this.emphasis.tint = tint;
+    this.emphasis.alpha = options.focused ? 1 : options.selected ? 0.9 : options.recommended ? 0.48 : 0;
+  }
+
   private drawShadow(width: number, height: number): void {
     this.shadow.clear();
     this.shadow.ellipse(6, 10, width * 0.42, height * 0.16);
     this.shadow.fill({ color: 0x000000, alpha: 0.28 });
+  }
+
+  private drawEmphasis(width: number, height: number): void {
+    this.emphasis.clear();
+    this.emphasis.roundRect(-width / 2 - 4, -height / 2 - 4, width + 8, height + 8, 8);
+    this.emphasis.stroke({ color: 0xffffff, width: 3, alpha: 1 });
+    this.emphasis.fill({ color: 0xffffff, alpha: 0.035 });
+    this.emphasis.alpha = 0;
   }
 
   private applyFace(): void {

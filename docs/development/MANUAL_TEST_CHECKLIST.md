@@ -146,3 +146,21 @@ Este checklist crece con las fases. La especificación de cada fase incluye un s
 - [ ] `prefers-reduced-motion` acorta vuelos y saca el shake.
 - [ ] Salir al menú a mitad de mano no deja ticker/audio/animación colgados.
 - [ ] Mesa de prueba sigue disponible desde el menú.
+
+## Gate Fase 3R
+
+- [ ] Repetir 3, 4 y 5 jugadores: el fondo no muestra sillas fijas y los tickets quedan a igual paso angular.
+- [ ] Desktop 1920×1080, 1366×768 y 1280×800: cartas, stock, triunfo, baza, tickets y acciones no colisionan.
+- [ ] Tablet 1024×768 y mobile landscape 844×390: la decoración cede antes que gameplay y no aparece área negra tras resize.
+- [ ] Mobile portrait 390×844 y mínimo 360×640: mano completa, acciones visibles, hints sin tapar cartas y ningún ticket recortado.
+- [ ] Redimensionar móvil → desktop → móvil durante reparto y durante una baza; no se pierden sprites ni se duplica HUD.
+- [ ] Teclado: Tab llega a la mano; flechas/Home/End recorren cartas; Enter/Espacio juega o selecciona; el sprite enfocado se distingue.
+- [ ] Lector/inspector de accesibilidad: turno, triunfo, salida, scores y victoria aparecen en la región viva; intercambio expone `aria-pressed`.
+- [ ] Contraste y foco visibles; ninguna acción depende únicamente de color o sonido; todos los controles tienen al menos 44 px.
+- [ ] Opciones: general, efectos y ambiente persisten; una preferencia antigua `{ muted, volume }` migra sin error.
+- [ ] Salir durante reparto, Palito o Mosca y hacer cinco revancha/salida; no quedan sonidos, timers ni callbacks visibles.
+- [ ] `prefers-reduced-motion`: vuelos ≤80 ms y sin shake, manteniendo rótulos y cambios de estado.
+- [ ] Menú, setup, opciones, guía, confirmación de salida, victoria y Créditos comparten wordmark, tipografía, materiales y foco.
+- [ ] Guía: cuatro páginas intactas, teclado/swipe usable y PDF comprimido descargable; abrir gameplay no descarga guía/PDF.
+- [ ] Mesa de prueba continúa funcional y se reconoce deliberadamente como herramienta de desarrollo.
+- [ ] Consola sin errores ni 404 durante una partida completa desktop y otra 360×640.

@@ -5,6 +5,7 @@
   import HowToPlayScreen from "./screens/HowToPlayScreen.svelte";
   import MenuScreen from "./screens/MenuScreen.svelte";
   import OptionsScreen from "./screens/OptionsScreen.svelte";
+  import CreditsScreen from "./screens/CreditsScreen.svelte";
   import PlaygroundScreen from "./screens/PlaygroundScreen.svelte";
   import SetupScreen from "./screens/SetupScreen.svelte";
   import TableScreen from "./screens/TableScreen.svelte";
@@ -42,6 +43,7 @@
     onHowTo={() => go("howto")}
     onOptions={() => go("options")}
     onPlayground={() => go("playground")}
+    onCredits={() => go("credits")}
   />
 {:else if screen === "setup"}
   <SetupScreen initial={setup} onStart={startMatch} onBack={() => go("menu")} />
@@ -49,6 +51,8 @@
   <HowToPlayScreen onBack={() => go("menu")} />
 {:else if screen === "options"}
   <OptionsScreen onBack={() => go("menu")} />
+{:else if screen === "credits"}
+  <CreditsScreen onBack={() => go("menu")} />
 {:else if screen === "playground"}
   <PlaygroundScreen onBack={() => go("menu")} />
 {:else if screen === "table"}

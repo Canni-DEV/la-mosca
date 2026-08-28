@@ -7,6 +7,7 @@ export interface Hint {
 }
 
 const STORAGE_KEY = "la-mosca.hints.v1";
+const ONBOARDING_KEY = "la-mosca.hints.first-match-started";
 
 const HINTS: Record<HintId, Hint> = {
   trump: {
@@ -83,4 +84,14 @@ export function dismissHint(id: HintId): void {
   const seen = loadSeen();
   seen.add(id);
   saveSeen(seen);
+}
+
+export function beginHintSession(): boolean {
+  try {
+    if (localStorage.getItem(ONBOARDING_KEY) === "true") return false;
+    localStorage.setItem(ONBOARDING_KEY, "true");
+    return true;
+  } catch {
+    return true;
+  }
 }

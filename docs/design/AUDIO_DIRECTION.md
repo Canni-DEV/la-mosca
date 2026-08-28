@@ -45,13 +45,13 @@ Debe quedar muy por debajo de cartas y UI. No usar música constante si compite 
 
 ## Mixer
 
-Separar al menos:
+El formato persistido es `{ muted, masterVolume, sfxVolume, ambienceVolume }`. Se migra automáticamente la preferencia anterior `{ muted, volume }`.
 
-- master;
+- master/general;
 - SFX;
-- ambience/music si existe.
+- ambiente.
 
-El MVP puede exponer un control simple de volumen, pero internamente conviene mantener categorías.
+No hay música continua.
 
 ## Persistencia
 
@@ -63,6 +63,8 @@ Guardar preferencia de volumen/mute en local storage es aceptable.
 - No enlazar SFX remotos en runtime.
 - Empaquetar assets localmente.
 - Mantener créditos/licencia cuando corresponda.
+- Foley CC0 breve en WAV local; presupuesto conjunto ≤1 MiB.
+- Mantener síntesis como fallback si un archivo no puede decodificarse.
 
 ## Accesibilidad
 

@@ -1,7 +1,6 @@
 import {
   Application,
   Container,
-  Graphics,
   Text,
 } from "pixi.js";
 import type {
@@ -9,36 +8,35 @@ import type {
   GameEvent,
   PlayerId,
   PlayerViewState,
-  Suit,
 } from "@la-mosca/game-protocol";
 import { ranksFor } from "@la-mosca/game-core";
 import { SUITS } from "@la-mosca/game-protocol";
 import { PresentationDirector } from "../animation/queue.ts";
-import { tween, wait, type TweenHandle } from "../animation/tween.ts";
+import { tween, wait } from "../animation/tween.ts";
 import { easeOutBack, easeOutCubic } from "../animation/easing.ts";
 import { allowShake } from "../animation/motion.ts";
 import { audioMixer } from "../audio/mixer.ts";
 import { CardSprite } from "./card-sprite.ts";
 import { preloadCardTextures } from "./card-textures.ts";
 import { createTableBackground, preloadTableArt } from "./table-background.ts";
-import { fanOffset, layoutTable, type SeatLayout, type TableLayout } from "./table-layout.ts";
+import { computeTableLayout, fanOffset, type SeatLayout, type TableLayout } from "./table-layout.ts";
 
 export interface TableSyncOptions {
   selectedIds?: readonly CardId[];
   inputLocked?: boolean;
 }
 
+export interface PresentationVisualState {
+  selectedIds: readonly CardId[];
+  focusedCardId: CardId | null;
+  inputLocked: boolean;
+}
+
 export interface TableHandlers {
   onCardClick?: (cardId: CardId) => void;
   onHumanZoneDoubleTap?: () => void;
+  onAnnounce?: (message: string) => void;
 }
-
-const SUIT_LABEL: Record<Suit, string> = {
-  OROS: "Oros",
-  COPAS: "Copas",
-  ESPADAS: "Espadas",
-  BASTOS: "Bastos",
-};
 
 type CardDealtEvent = Extract<GameEvent, { type: "CardDealt" }>;
 
@@ -48,15 +46,15 @@ export class PixiTable {
   private root = new Container();
   private world = new Container();
   private cardLayer = new Container();
-  private hudLayer = new Container();
   private overlayLayer = new Container();
   private cards = new Map<string, CardSprite>();
-  private seatHud = new Map<PlayerId, SeatHud>();
   private layout: TableLayout | null = null;
   private view: PlayerViewState | null = null;
   private selectedIds: readonly CardId[] = [];
   private inputLocked = false;
-  private tweenHandle: TweenHandle = { cancelled: false };
+  private focusedCardId: CardId | null = null;
+  private animationAbort = new AbortController();
+  private presenting = false;
   private lastTap = 0;
   private banner: Text | null = null;
   private trickSprites: CardSprite[] = [];
@@ -69,21 +67,23 @@ export class PixiTable {
     this.host = host;
     this.destroyed = false;
     this.director.reset();
-    this.tweenHandle = { cancelled: false };
+    this.animationAbort = new AbortController();
+    this.presenting = false;
     this.chromeKey = "";
     this.root = new Container();
     this.world = new Container();
     this.cardLayer = new Container();
-    this.hudLayer = new Container();
     this.overlayLayer = new Container();
     await Promise.all([preloadTableArt(), preloadAllFaces()]);
     if (this.destroyed) {
       return;
     }
     const app = new Application();
+    const bounds = host.getBoundingClientRect();
     await app.init({
       background: 0x140c08,
-      resizeTo: host,
+      width: Math.max(1, Math.round(bounds.width)),
+      height: Math.max(1, Math.round(bounds.height)),
       antialias: true,
       autoDensity: true,
       resolution: Math.min(2, window.devicePixelRatio || 1),
@@ -99,24 +99,39 @@ export class PixiTable {
     audioMixer.startAmbience();
   }
 
-  resize(): void {
-    if (!this.app || !this.view) {
-      return;
+  resize(width: number, height: number): void {
+    if (!this.app) return;
+    this.app.renderer.resize(Math.max(1, Math.round(width)), Math.max(1, Math.round(height)));
+  }
+
+  applyLayout(layout: TableLayout): void {
+    if (!this.app) return;
+    if (this.app.screen.width !== layout.width || this.app.screen.height !== layout.height) {
+      this.resize(layout.width, layout.height);
     }
-    this.sync(this.view, { selectedIds: this.selectedIds, inputLocked: this.inputLocked });
+    this.layout = layout;
+    if (this.presenting) return;
+    const key = `${layout.width}x${layout.height}x${layout.mode}x${layout.seats.length}`;
+    if (key !== this.chromeKey) {
+      this.chromeKey = key;
+      this.rebuildChrome();
+    }
+    if (this.view) {
+      this.reconcileCards(this.view);
+      this.layoutCards(this.view);
+    }
   }
 
   destroy(): void {
     this.destroyed = true;
     this.director.cancel();
-    this.tweenHandle.cancelled = true;
-    audioMixer.stopAmbience();
+    this.animationAbort.abort();
+    audioMixer.stopAll();
     this.root.removeAllListeners();
     this.app?.destroy(true, { children: true, texture: false });
     this.app = null;
     this.host = null;
     this.cards.clear();
-    this.seatHud.clear();
     this.trickSprites = [];
     this.banner = null;
   }
@@ -129,7 +144,6 @@ export class PixiTable {
       return;
     }
     this.ensureLayout(view);
-    this.layoutSeats(view);
     this.reconcileCards(view);
     this.layoutCards(view);
   }
@@ -146,6 +160,13 @@ export class PixiTable {
     if (this.view) {
       this.layoutCards(this.view);
     }
+  }
+
+  setVisualState(state: PresentationVisualState): void {
+    this.selectedIds = state.selectedIds;
+    this.focusedCardId = state.focusedCardId;
+    this.inputLocked = state.inputLocked;
+    if (this.view) this.layoutCards(this.view);
   }
 
   async presentEvents(events: readonly GameEvent[], view: PlayerViewState): Promise<void> {
@@ -175,16 +196,22 @@ export class PixiTable {
       });
       index += 1;
     }
-    await this.director.run(clips);
+    this.presenting = true;
+    try {
+      await this.director.run(clips, this.animationAbort.signal);
+    } finally {
+      this.presenting = false;
+    }
     if (this.destroyed) {
       return;
     }
+    if (this.layout) this.applyLayout(this.layout);
     this.sync(view, { selectedIds: this.selectedIds, inputLocked: this.inputLocked });
   }
 
   async flashBanner(text: string, tint = 0xf3e6c8, hold = 900): Promise<void> {
     this.showBanner(text, tint);
-    await wait(hold, this.tweenHandle);
+    await wait(hold, this.animationAbort.signal);
     this.hideBanner();
   }
 
@@ -192,11 +219,11 @@ export class PixiTable {
     switch (event.type) {
       case "DeckShuffled":
         audioMixer.play("shuffle");
-        await this.jiggleDeck();
+        await this.jiggleDeck(650);
         return;
       case "DeckCut":
         audioMixer.play("cut");
-        await this.jiggleDeck();
+        await this.jiggleDeck(380);
         return;
       case "TrumpRevealed":
         audioMixer.play("trump");
@@ -216,33 +243,40 @@ export class PixiTable {
         await this.animatePlay(event.playerId, event.cardId, view);
         return;
       case "PalitoDetected":
+        this.handlers.onAnnounce?.("Palito. La jugada suma 50 puntos.");
         audioMixer.play("palito");
         await this.shake();
-        await this.flashBanner("¡SALTASTE EL PALITO!", 0xf2d08a, 1100);
+        await this.flashBanner("PALITO", 0xf2d08a, 520);
         return;
       case "ScoreChanged":
+        this.handlers.onAnnounce?.(`${event.delta > 0 ? "+" : ""}${event.delta} puntos.`);
         await this.floatScore(event.playerId, event.delta, event.scoreType);
         return;
       case "TrickCompleted":
-        await wait(280, this.tweenHandle);
+        await wait(280, this.animationAbort.signal);
         audioMixer.play("collect");
         await this.collectTrick(event.winnerPlayerId, view);
         return;
       case "MoscaDetected":
       case "MoscaRevealed":
         if (event.type === "MoscaRevealed") {
+          this.handlers.onAnnounce?.("Mosca. Se revelan las cinco cartas.");
           audioMixer.play("mosca");
+          this.showBanner("MOSCA", 0xf6e2a2);
           await this.showMosca(event.playerId, event.cardIds, view);
-          await this.flashBanner("MOSCA", 0xf6e2a2, 1200);
+          await wait(260, this.animationAbort.signal);
+          this.hideBanner();
         }
         return;
       case "PlayerChupado":
+        this.handlers.onAnnounce?.("Chupado. Suma 5 puntos.");
         audioMixer.play("chupado");
-        await this.flashBanner("CHUPADO +5", 0xe7b7a0, 700);
+        await this.flashBanner("CHUPADO +5", 0xe7b7a0, 560);
         return;
       case "GameWon":
+        this.handlers.onAnnounce?.("Partida terminada.");
         audioMixer.play("victory");
-        await wait(520, this.tweenHandle);
+        await wait(520, this.animationAbort.signal);
         return;
       default:
         return;
@@ -262,14 +296,11 @@ export class PixiTable {
     this.cards.clear();
     this.trickSprites = [];
     this.banner = null;
-    this.seatHud.clear();
     this.cardLayer.removeChildren();
-    this.hudLayer.removeChildren();
     this.overlayLayer.removeChildren();
     const bg = createTableBackground(app.screen.width, app.screen.height, this.layout);
     this.world.addChild(bg);
     this.world.addChild(this.cardLayer);
-    this.world.addChild(this.hudLayer);
     this.root.addChild(this.world);
     this.root.addChild(this.overlayLayer);
   }
@@ -279,47 +310,14 @@ export class PixiTable {
     if (!app) {
       return;
     }
-    this.layout = layoutTable(
-      app.screen.width,
-      app.screen.height,
-      view.players,
-      view.viewerId,
-      view.dealerPlayerId,
-    );
-    const key = `${this.layout.width}x${this.layout.height}x${this.layout.seats.length}`;
-    if (key !== this.chromeKey) {
-      this.chromeKey = key;
-      this.rebuildChrome();
-    }
-  }
-
-  private layoutSeats(view: PlayerViewState): void {
-    const layout = this.layout;
-    if (!layout) {
-      return;
-    }
-    for (const seat of layout.seats) {
-      let hud = this.seatHud.get(seat.id);
-      if (!hud) {
-        hud = createSeatHud();
-        this.seatHud.set(seat.id, hud);
-        this.hudLayer.addChild(hud.root);
-      }
-      const player = view.players.find((item) => item.id === seat.id);
-      hud.root.position.set(seat.label.x, seat.label.y);
-      const turn = view.currentActorId === seat.id;
-      const passed = player?.hasPassed ?? false;
-      hud.name.text = seat.name;
-      hud.score.text = `${player?.score ?? 0}`;
-      hud.meta.text = [
-        player?.isDealer ? "Reparte" : "",
-        passed ? "Pasó" : "",
-        player && player.tricksWonInCurrentHand > 0 ? `Bazas ${player.tricksWonInCurrentHand}` : "",
-      ]
-        .filter(Boolean)
-        .join(" · ");
-      hud.turn.visible = turn && !passed;
-      hud.root.alpha = passed ? 0.55 : 1;
+    if (!this.layout) {
+      this.applyLayout(computeTableLayout({
+        width: app.screen.width,
+        height: app.screen.height,
+        players: view.players,
+        humanPlayerId: view.viewerId,
+        dealerPlayerId: view.dealerPlayerId,
+      }));
     }
   }
 
@@ -406,13 +404,16 @@ export class PixiTable {
         const blocked = view.availableActions
           .find((action) => action.type === "EXCHANGE_CARDS")
           ?.blockedCardIds?.includes(card.id);
-        const hoverLift = selected ? -layout.humanCardHeight * 0.12 : 0;
+        const focused = this.focusedCardId === card.id;
+        const recommended = view.legalCardIds.includes(card.id);
+        const hoverLift = selected || focused ? -layout.humanCardHeight * 0.12 : recommended ? -layout.humanCardHeight * 0.035 : 0;
         sprite.position.set(humanSeat.hand.x + fan.x, humanSeat.hand.y + fan.y + hoverLift);
         sprite.rotation = fan.rotation;
         sprite.zIndex = 100 + index;
         sprite.alpha = blocked ? 0.55 : legal ? 1 : 0.82;
         sprite.setCardSize(layout.humanCardWidth, layout.humanCardHeight);
         sprite.setFaceUp(true);
+        sprite.setEmphasis({ selected, focused, recommended });
         this.bindHumanCard(sprite, card.id);
       });
     }
@@ -553,11 +554,9 @@ export class PixiTable {
       return;
     }
     const counts = new Map<PlayerId, number>();
-    for (const event of batch) {
+    const prepared = batch.map((event, dealIndex) => {
       const seat = layout.seats.find((item) => item.id === event.playerId);
-      if (!seat) {
-        continue;
-      }
+      if (!seat) return null;
       const already = counts.get(event.playerId) ?? 0;
       counts.set(event.playerId, already + 1);
       const faceUp = event.playerId === view.viewerId;
@@ -579,13 +578,15 @@ export class PixiTable {
         y: seat.hand.y + fan.y,
         rotation: faceUp ? fan.rotation : seat.rotation,
       };
+      return { event, dealIndex, faceUp, sprite, target };
+    }).filter((item): item is NonNullable<typeof item> => item !== null);
+    await Promise.all(prepared.map(async ({ event, dealIndex, faceUp, sprite, target }) => {
+      await wait(dealIndex * 95, this.animationAbort.signal);
+      if (this.animationAbort.signal.aborted) return;
       audioMixer.play("deal");
-      await this.moveSprite(sprite, target, 220);
-      if (faceUp) {
-        sprite.reveal(event.cardId);
-      }
-      await wait(70, this.tweenHandle);
-    }
+      await this.moveSprite(sprite, target, 240);
+      if (faceUp && this.canTouch(sprite)) sprite.reveal(event.cardId);
+    }));
   }
 
   private async revealTrump(cardId: CardId, view: PlayerViewState): Promise<void> {
@@ -597,26 +598,30 @@ export class PixiTable {
     sprite.position.set(layout.deck.x, layout.deck.y);
     sprite.setFaceUp(false);
     await this.moveSprite(sprite, { x: layout.trump.x, y: layout.trump.y, rotation: layout.stockRotation * 0.18 - 0.1 }, 280);
+    if (!this.canTouch(sprite)) return;
     await this.flipReveal(sprite, cardId);
   }
 
   private async flipReveal(sprite: CardSprite, cardId: CardId): Promise<void> {
+    if (!this.canTouch(sprite)) return;
     await tween({
       duration: 140,
-      handle: this.tweenHandle,
+      handle: this.animationAbort.signal,
       onUpdate: (t) => {
         sprite.scale.x = Math.max(0.02, 1 - t);
       },
     });
+    if (!this.canTouch(sprite)) return;
     sprite.reveal(cardId);
     await tween({
       duration: 160,
-      handle: this.tweenHandle,
+      handle: this.animationAbort.signal,
       easing: easeOutCubic,
       onUpdate: (t) => {
         sprite.scale.x = Math.max(0.02, t);
       },
     });
+    if (!this.canTouch(sprite)) return;
     sprite.scale.x = 1;
   }
 
@@ -636,7 +641,7 @@ export class PixiTable {
       sprites.map((sprite) =>
         tween({
           duration: 280,
-          handle: this.tweenHandle,
+          handle: this.animationAbort.signal,
           onUpdate: (t) => {
             sprite.alpha = 1 - t * 0.7;
             sprite.scale.set(1 - t * 0.15);
@@ -662,6 +667,7 @@ export class PixiTable {
       const key = playerId === view.viewerId ? cardKey(discarded[i]!) : hiddenKey(playerId, i);
       const sprite = this.cards.get(key) ?? this.ensureCard(key, layout.cardWidth * 0.7, layout.cardHeight * 0.7, discarded[i] ?? null, playerId === view.viewerId);
       await this.moveSprite(sprite, { x: layout.deck.x, y: layout.deck.y, rotation: 0 }, 200);
+      if (!this.canTouch(sprite)) return;
       sprite.alpha = 0;
     }
     for (let i = 0; i < drawn.length; i += 1) {
@@ -677,7 +683,7 @@ export class PixiTable {
       sprite.alpha = 1;
       sprite.position.set(layout.deck.x, layout.deck.y);
       await this.moveSprite(sprite, { x: seat.hand.x, y: seat.hand.y, rotation: seat.rotation }, 220);
-      if (faceUp && drawn[i]) {
+      if (faceUp && drawn[i] && this.canTouch(sprite)) {
         sprite.reveal(drawn[i]!);
       }
     }
@@ -721,6 +727,7 @@ export class PixiTable {
     await Promise.all(
       sprites.map((sprite) => this.moveSprite(sprite, { x: seat.pile.x, y: seat.pile.y, rotation: seat.rotation }, 320)),
     );
+    if (this.destroyed || this.animationAbort.signal.aborted) return;
     const existing = [...this.cards.keys()].filter((key) => key.startsWith(`pile:${winnerId}:`)).length;
     for (const [index, sprite] of sprites.entries()) {
       const oldKey = [...this.cards.entries()].find(([, item]) => item === sprite)?.[0];
@@ -742,18 +749,18 @@ export class PixiTable {
     if (!layout) {
       return;
     }
-    for (const [index, id] of cardIds.entries()) {
+    await Promise.all(cardIds.map(async (id, index) => {
       const sprite = this.ensureCard(cardKey(id), layout.cardWidth, layout.cardHeight, id, true);
       const fan = fanOffset(index, cardIds.length, layout.cardWidth * 0.7);
       sprite.alpha = 1;
       sprite.zIndex = 120 + index;
+      await wait(index * 60, this.animationAbort.signal);
       await this.moveSprite(
         sprite,
         { x: layout.center.x + fan.x, y: layout.center.y + fan.y - 20, rotation: fan.rotation },
         240,
       );
-    }
-    await wait(500, this.tweenHandle);
+    }));
   }
 
   private async floatScore(playerId: PlayerId, delta: number, scoreType: string): Promise<void> {
@@ -768,7 +775,7 @@ export class PixiTable {
       style: {
         fill: scoreType === "PALITO" ? 0xffd27a : delta < 0 ? 0xd6f0c2 : 0xf0c2c2,
         fontSize: scoreType === "PALITO" ? 42 : 28,
-        fontFamily: "Georgia, serif",
+        fontFamily: "Fraunces, Georgia, serif",
         fontWeight: "bold",
         stroke: { color: 0x1a100b, width: 4 },
       },
@@ -779,32 +786,34 @@ export class PixiTable {
     const startY = text.y;
     await tween({
       duration: 700,
-      handle: this.tweenHandle,
+      handle: this.animationAbort.signal,
       easing: easeOutCubic,
       onUpdate: (t) => {
         text.y = startY - 40 * t;
         text.alpha = t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3;
       },
     });
-    text.destroy();
+    if (!text.destroyed) text.destroy();
   }
 
-  private async jiggleDeck(): Promise<void> {
+  private async jiggleDeck(duration: number): Promise<void> {
     const sprites = [...this.cards.entries()].filter(([key]) => key.startsWith("deck:")).map(([, sprite]) => sprite);
     await Promise.all(
       sprites.map((sprite, index) => {
         const startX = sprite.x;
         const startY = sprite.y;
         return tween({
-          duration: 360,
-          handle: this.tweenHandle,
+          duration,
+          handle: this.animationAbort.signal,
           onUpdate: (t) => {
             sprite.x = startX + Math.sin(t * Math.PI * 4 + index) * 6;
             sprite.y = startY + Math.cos(t * Math.PI * 3) * 3;
           },
         }).then(() => {
-          sprite.x = startX;
-          sprite.y = startY;
+          if (this.canTouch(sprite)) {
+            sprite.x = startX;
+            sprite.y = startY;
+          }
         });
       }),
     );
@@ -812,18 +821,18 @@ export class PixiTable {
 
   private async shake(): Promise<void> {
     if (!allowShake()) {
-      await wait(180, this.tweenHandle);
+      await wait(180, this.animationAbort.signal);
       return;
     }
     const startX = this.world.x;
     await tween({
       duration: 280,
-      handle: this.tweenHandle,
+      handle: this.animationAbort.signal,
       onUpdate: (t) => {
         this.world.x = startX + Math.sin(t * Math.PI * 8) * 10 * (1 - t);
       },
     });
-    this.world.x = startX;
+    if (this.canTouch(this.world)) this.world.x = startX;
   }
 
   private async moveSprite(
@@ -831,12 +840,13 @@ export class PixiTable {
     target: { x: number; y: number; rotation: number },
     duration: number,
   ): Promise<void> {
+    if (!this.canTouch(sprite)) return;
     const x0 = sprite.x;
     const y0 = sprite.y;
     const r0 = sprite.rotation;
     await tween({
       duration,
-      handle: this.tweenHandle,
+      handle: this.animationAbort.signal,
       easing: easeOutBack,
       onUpdate: (t) => {
         sprite.x = x0 + (target.x - x0) * t;
@@ -844,8 +854,13 @@ export class PixiTable {
         sprite.rotation = r0 + (target.rotation - r0) * t;
       },
     });
+    if (!this.canTouch(sprite)) return;
     sprite.position.set(target.x, target.y);
     sprite.rotation = target.rotation;
+  }
+
+  private canTouch(display: Container): boolean {
+    return !this.destroyed && !this.animationAbort.signal.aborted && !display.destroyed;
   }
 
   private showBanner(text: string, tint: number): void {
@@ -854,8 +869,8 @@ export class PixiTable {
       text,
       style: {
         fill: tint,
-        fontSize: 46,
-        fontFamily: "Georgia, serif",
+        fontSize: this.layout?.mode === "mobilePortrait" ? 27 : 42,
+        fontFamily: "Fraunces, Georgia, serif",
         fontWeight: "bold",
         stroke: { color: 0x1a100b, width: 6 },
         align: "center",
@@ -863,7 +878,7 @@ export class PixiTable {
     });
     banner.anchor.set(0.5);
     const app = this.app;
-    banner.position.set((app?.renderer.width ?? 800) / 2, (app?.renderer.height ?? 600) * 0.36);
+    banner.position.set((app?.screen.width ?? 800) / 2, (app?.screen.height ?? 600) * 0.42);
     this.overlayLayer.addChild(banner);
     this.banner = banner;
   }
@@ -890,46 +905,6 @@ export class PixiTable {
     }
     this.lastTap = now;
   }
-}
-
-interface SeatHud {
-  root: Container;
-  name: Text;
-  score: Text;
-  meta: Text;
-  turn: Graphics;
-}
-
-function createSeatHud(): SeatHud {
-  const root = new Container();
-  const paper = new Graphics();
-  paper.roundRect(-72, -26, 144, 70, 8);
-  paper.fill({ color: 0xe8d9b6, alpha: 0.92 });
-  paper.stroke({ width: 2, color: 0x8a6a3b, alpha: 0.8 });
-  const turn = new Graphics();
-  turn.roundRect(-76, -30, 152, 78, 10);
-  turn.stroke({ width: 3, color: 0xe8c37a, alpha: 0.95 });
-  turn.fill({ color: 0x000000, alpha: 0 });
-  const name = new Text({
-    text: "",
-    style: { fill: 0x2a1810, fontSize: 15, fontFamily: "Georgia, serif", fontWeight: "bold" },
-  });
-  name.anchor.set(0.5, 0);
-  name.y = -18;
-  const score = new Text({
-    text: "20",
-    style: { fill: 0x6b2a22, fontSize: 22, fontFamily: "Georgia, serif", fontWeight: "bold" },
-  });
-  score.anchor.set(0.5, 0);
-  score.y = 2;
-  const meta = new Text({
-    text: "",
-    style: { fill: 0x5a4030, fontSize: 11, fontFamily: "Segoe UI, sans-serif" },
-  });
-  meta.anchor.set(0.5, 0);
-  meta.y = 28;
-  root.addChild(paper, turn, name, score, meta);
-  return { root, name, score, meta, turn };
 }
 
 function cardKey(cardId: CardId): string {

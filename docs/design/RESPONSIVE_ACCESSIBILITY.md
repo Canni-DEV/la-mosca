@@ -2,7 +2,9 @@
 
 ## Estrategia
 
-El MVP es **desktop-first**, pero debe ser usable en tablet y móvil desde el comienzo. El futuro modo celular-como-mano es otra funcionalidad y no reemplaza el responsive normal.
+El viewport mínimo oficial es **360×640**. El futuro modo celular-como-mano es otra funcionalidad y no reemplaza el responsive normal.
+
+La geometría se resuelve con cinco modos cerrados: `desktopWide`, `desktopCompact`, `tablet`, `mobileLandscape` y `mobilePortrait`. Pixi y Svelte reciben los mismos anchors desde `computeTableLayout()`.
 
 ## Desktop
 
@@ -36,7 +38,7 @@ En pantallas pequeñas, decoración puede ocultarse.
 ## Orientación
 
 - No depender exclusivamente de landscape.
-- Puede recomendarse landscape para experiencia ideal si es necesario.
+- No se bloquea portrait ni se exige rotación.
 - Si portrait requiere una composición distinta, resolverlo mediante layout adaptativo, no escalando todo hasta ilegibilidad.
 
 ## Touch
@@ -62,7 +64,13 @@ Respetar `prefers-reduced-motion`:
 
 ## Teclado
 
-No hace falta convertir todo el juego en una experiencia keyboard-first en la primera fase, pero los menús Svelte deben usar elementos semánticos y controles accesibles. En la fase release, agregar navegación razonable de acciones principales si es viable.
+- la mano tiene un grupo DOM accesible sincronizado con Pixi;
+- izquierda/derecha, Home y End cambian la carta activa;
+- Enter/Espacio juega o selecciona;
+- intercambio informa `aria-pressed`;
+- el foco DOM dibuja énfasis visible sobre el sprite correspondiente.
+
+Turno, triunfo, salida y scores se anuncian mediante `aria-live`. Palito, Mosca, Chupado y victoria conservan feedback textual además del audio.
 
 ## Audio
 

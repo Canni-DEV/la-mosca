@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { VictoryInfo } from "../app/navigation.ts";
+  import Wordmark from "../components/Wordmark.svelte";
 
   let {
     info,
@@ -16,7 +17,8 @@
 
 <main class="screen">
   <div class="screen-card stack">
-    <h1 class="brand" style="font-size: 42px;">{info.humanWon ? "¡Ganaste!" : "Partida terminada"}</h1>
+    <Wordmark compact />
+    <h1 class="brand">{info.humanWon ? "¡Ganaste!" : "Partida terminada"}</h1>
     <p class="tagline">{info.humanWon ? "Llegaste a 0." : `Ganó ${info.winnerName}.`}</p>
     <ul>
       {#each info.scores as player}

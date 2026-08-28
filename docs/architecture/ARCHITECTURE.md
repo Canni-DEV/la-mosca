@@ -142,6 +142,15 @@ Responsabilidades:
 - tutorial/cómo jugar;
 - build estático.
 
+### Frontera de presentación de mesa
+
+- `TableScreen` mide el host con `ResizeObserver`, coalescea cambios en un RAF y es dueño de `TableLayout`.
+- `computeTableLayout()` trabaja siempre en píxeles CSS y produce los anchors compartidos.
+- Pixi conserva fondo/mesa, cartas/manos, stock/triunfo público, bazas, props y efectos.
+- Svelte conserva placas, turno, palos, acciones, ayudas y semántica accesible.
+- `resolution`/DPR sólo mejora nitidez; nunca cambia coordenadas lógicas.
+- `PixiTable.sync(PlayerViewState)` puede reconstruir toda la escena después de cancelar una animación.
+
 No debe recalcular reglas de cartas por su cuenta.
 
 La UI puede consultar información derivada para presentación, pero la decisión normativa siempre proviene del motor.
@@ -238,6 +247,8 @@ Hacer:
 modificar estado → emitir evento → animar representación
 ```
 
+`PresentationTimeline.run(clips, signal)` es la única vía de secuenciación. La composición ofrece `sequence`, `parallel`, `stagger` y waits cancelables sin polling RAF persistente.
+
 ## 11. RNG y determinismo
 
 Barajado y cualquier decisión aleatoria del bot deben aceptar una fuente de aleatoriedad inyectable o seed.
@@ -302,6 +313,8 @@ La Mosca no requiere optimización extrema. Prioridades:
 - evitar re-renderizar toda la escena por cambios pequeños;
 - precargar assets esenciales antes de entrar a la mesa;
 - destruir listeners/texturas/escenas al abandonar una partida;
+- renderer y layout medidos desde el host, no sólo desde `window`;
+- ocultar habitación/props antes de reducir cartas críticas;
 - no introducir ECS ni arquitectura de engine compleja sin necesidad.
 
 ## 17. Seguridad del alcance

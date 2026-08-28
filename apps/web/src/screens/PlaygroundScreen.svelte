@@ -3,6 +3,7 @@
   import type { DebugViewState, DeckConfiguration, GameEvent } from "@la-mosca/game-protocol";
   import { LocalGameSession } from "../game/LocalGameSession.ts";
   import { PixiTable } from "../scene/pixi-table.ts";
+  import { computeTableLayout } from "../scene/table-layout.ts";
 
   let { onBack }: { onBack: () => void } = $props();
 
@@ -17,6 +18,8 @@
   let events = $state<GameEvent[]>([]);
   let eventCount = $state(0);
   let unsubscribe: (() => void) | null = null;
+  let observer: ResizeObserver | null = null;
+  let resizeFrame = 0;
   const table = new PixiTable();
 
   function formatEvent(event: GameEvent): string {
@@ -37,7 +40,18 @@
     debug = nextDebug;
     eventCount = log.length;
     events = log.slice(-EVENT_LOG_LIMIT).reverse();
-    table.sync(current.getViewState(), { inputLocked: true });
+    const view = current.getViewState();
+    if (host) {
+      const rect = host.getBoundingClientRect();
+      table.applyLayout(computeTableLayout({
+        width: Math.max(1, Math.round(rect.width)),
+        height: Math.max(1, Math.round(rect.height)),
+        players: view.players,
+        humanPlayerId: view.viewerId,
+        dealerPlayerId: view.dealerPlayerId,
+      }));
+    }
+    table.sync(view, { inputLocked: true });
   }
 
   function start(): void {
@@ -55,12 +69,19 @@
   onMount(async () => {
     if (host) {
       await table.mount(host);
+      observer = new ResizeObserver(() => {
+        cancelAnimationFrame(resizeFrame);
+        resizeFrame = requestAnimationFrame(refresh);
+      });
+      observer.observe(host);
       refresh();
     }
   });
 
   onDestroy(() => {
     unsubscribe?.();
+    cancelAnimationFrame(resizeFrame);
+    observer?.disconnect();
     table.destroy();
   });
 

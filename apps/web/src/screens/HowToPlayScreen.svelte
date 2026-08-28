@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import { prefersReducedMotion } from "../animation/motion.ts";
-  import page0 from "../assets/guia-ilustrada/0_Mosca.png";
-  import page1 from "../assets/guia-ilustrada/1_Mosca.png";
-  import page2 from "../assets/guia-ilustrada/2_Mosca.png";
-  import page3 from "../assets/guia-ilustrada/3_Mosca.png";
-  import manualPdf from "../assets/guia-ilustrada/La_Mosca_Guia_Ilustrada.pdf";
+  import Wordmark from "../components/Wordmark.svelte";
+  import page0 from "../assets/guia-ilustrada/runtime/0_Mosca.webp";
+  import page1 from "../assets/guia-ilustrada/runtime/1_Mosca.webp";
+  import page2 from "../assets/guia-ilustrada/runtime/2_Mosca.webp";
+  import page3 from "../assets/guia-ilustrada/runtime/3_Mosca.webp";
+  import manualPdf from "../assets/guia-ilustrada/runtime/La_Mosca_Guia_Ilustrada.pdf";
 
   let { onBack }: { onBack: () => void } = $props();
 
@@ -132,6 +133,7 @@
 <main class="screen guide-screen">
   <div class="guide">
     <header class="guide-head">
+      <Wordmark compact />
       <h1 class="guide-title">Cómo jugar</h1>
       <p class="guide-kicker">Pasá las páginas · el PDF se descarga abajo</p>
     </header>

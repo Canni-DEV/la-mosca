@@ -2,7 +2,7 @@
 
 Repositorio base de documentación y reglas de agente para desarrollar **La Mosca — variante Las Parejas** como videojuego web.
 
-Este repositorio está preparado para abrirse directamente en **Cursor**. La Fase 3 está implementada y espera aceptación manual. La partida single-player contra bots sigue siendo el camino principal.
+La Fase 3R está implementada y espera aceptación manual. La partida single-player contra bots sigue siendo el camino principal; la Fase 4 no debe comenzar hasta la aprobación explícita del gate.
 
 ## Cómo correr la app
 
@@ -15,6 +15,8 @@ pnpm dev
 ```
 
 La app queda en `http://localhost:5173`.
+
+Los derivados de arte se regeneran sin tocar los originales con `apps/web/scripts/prepare-assets.py` (requiere Pillow).
 
 Desde el menú: **Jugar** abre una partida humano vs bots. **Mesa de prueba** conserva el playground de la Fase 1 (todos bots).
 

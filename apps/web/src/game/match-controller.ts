@@ -7,6 +7,7 @@ import { HUMAN_PLAYER_ID, LocalGameSession, type SessionConfig } from "./LocalGa
 export interface MatchControllerCallbacks {
   onView: (view: PlayerViewState) => void;
   onEnded: (view: PlayerViewState) => void;
+  onAnnouncement?: (message: string) => void;
 }
 
 export class MatchController {
@@ -18,6 +19,7 @@ export class MatchController {
   private busy = false;
   private readonly callbacks: MatchControllerCallbacks;
   private unsubscribe: (() => void) | null = null;
+  private readonly abortController = new AbortController();
 
   constructor(config: SessionConfig, table: PixiTable, callbacks: MatchControllerCallbacks) {
     this.session = new LocalGameSession({ ...config, humanPlayerId: HUMAN_PLAYER_ID });
@@ -33,6 +35,7 @@ export class MatchController {
       onHumanZoneDoubleTap: () => {
         void this.pass();
       },
+      onAnnounce: (message) => this.callbacks.onAnnouncement?.(message),
     };
     this.unsubscribe = this.session.subscribe(() => this.emitView());
     this.lock(true);
@@ -44,6 +47,7 @@ export class MatchController {
 
   destroy(): void {
     this.destroyed = true;
+    this.abortController.abort();
     this.unsubscribe?.();
     this.table.handlers = {};
   }
@@ -74,6 +78,18 @@ export class MatchController {
       this.selectedIds = [];
       await this.human({ type: "STAY", actorId: HUMAN_PLAYER_ID });
     }
+  }
+
+  async activateCard(cardId: CardId): Promise<void> {
+    await this.handleCardClick(cardId);
+  }
+
+  focusCard(cardId: CardId | null): void {
+    this.table.setVisualState({
+      selectedIds: this.selectedIds,
+      focusedCardId: cardId,
+      inputLocked: this.inputLocked,
+    });
   }
 
   private async handleCardClick(cardId: CardId): Promise<void> {
@@ -156,9 +172,9 @@ export class MatchController {
       }
       this.lock(true);
       if (peek.kind === "bot") {
-        await wait(250 + Math.floor(Math.random() * 450));
+        await wait(250 + Math.floor(Math.random() * 450), this.abortController.signal);
       } else {
-        await wait(160);
+        await wait(160, this.abortController.signal);
       }
       if (this.destroyed) {
         return;

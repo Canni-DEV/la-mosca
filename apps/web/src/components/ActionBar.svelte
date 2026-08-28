@@ -28,7 +28,7 @@
       return "Preparando la mesa…";
     }
     if (locked && view.phase !== "GAME_OVER") {
-      return view.currentActorId === view.viewerId ? "Resolviendo…" : "Turno de la mesa…";
+      return view.currentActorId === view.viewerId ? "Resolviendo…" : "Esperá…";
     }
     if (view.phase === "GAME_OVER") {
       return "Partida terminada";
@@ -43,7 +43,7 @@
       if (!view.availableActions.some((action) => action.type === "PASS")) {
         return "No se puede pasar. Elegí hasta 3 cartas y confirmá, o quedate.";
       }
-      return "Pasá, quedate o cambiá hasta 3 cartas. Doble toque en tu zona también es Paso.";
+      return "Pasá, quedate o cambiá hasta 3 cartas.";
     }
     return "Esperá tu turno.";
   });

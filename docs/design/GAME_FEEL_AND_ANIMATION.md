@@ -24,24 +24,26 @@ Debe soportar:
 - cancelación segura al salir de la partida;
 - `prefers-reduced-motion`.
 
+La implementación usa `PresentationTimeline` con `sequence`, `parallel`, `stagger`, `wait` cancelable y `AbortSignal`. Salir o iniciar revancha cancela timeline, timers, RAF y fuentes de audio.
+
 ## Animaciones mínimas
 
 ### Barajar
 
 - breve mezcla del mazo;
 - no simular físicamente 40–48 cartas una por una si resulta lento;
-- duración objetivo aproximada: 500–900 ms.
+- duración objetivo: 650 ms.
 
 ### Cortar
 
 - separar parte del mazo y recombinar;
-- 300–500 ms.
+- 380 ms.
 
 ### Repartir
 
 - cartas salen desde mazo/dealer hacia cada asiento de una en una;
 - mantener orden de reparto real;
-- stagger aproximado 70–130 ms por carta;
+- 240 ms de vuelo con stagger de 95 ms por carta;
 - la última del dealer debe diferenciarse al revelarse.
 
 ### Revelar triunfo

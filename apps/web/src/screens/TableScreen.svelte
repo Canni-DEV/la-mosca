@@ -2,35 +2,38 @@
   import { onDestroy, onMount } from "svelte";
   import type { CardId, PlayerViewState } from "@la-mosca/game-protocol";
   import type { MatchSetup, VictoryInfo } from "../app/navigation.ts";
+  import AccessibleHand from "../components/AccessibleHand.svelte";
   import ActionBar from "../components/ActionBar.svelte";
   import ContextualHints from "../components/ContextualHints.svelte";
   import GameHud from "../components/GameHud.svelte";
+  import SeatHudOverlay from "../components/SeatHudOverlay.svelte";
   import SuitPlaque from "../components/SuitPlaque.svelte";
   import VictoryScreen from "./VictoryScreen.svelte";
   import { MatchController, unlockAudio } from "../game/match-controller.ts";
   import { HUMAN_PLAYER_ID } from "../game/LocalGameSession.ts";
   import { PixiTable } from "../scene/pixi-table.ts";
+  import { computeTableLayout, type TableLayout } from "../scene/table-layout.ts";
 
-  let {
-    setup,
-    onMenu,
-    onNewGame,
-    onRematch,
-  }: {
+  let { setup, onMenu, onNewGame, onRematch }: {
     setup: MatchSetup;
     onMenu: () => void;
     onNewGame: () => void;
     onRematch: () => void;
   } = $props();
 
+  let stage = $state<HTMLDivElement | null>(null);
   let host = $state<HTMLDivElement | null>(null);
   let view = $state<PlayerViewState | null>(null);
+  let layout = $state<TableLayout | null>(null);
   let locked = $state(true);
   let selectedIds = $state<CardId[]>([]);
   let victory = $state<VictoryInfo | null>(null);
   let leaving = $state(false);
+  let eventAnnouncement = $state("");
+  let resizeFrame = 0;
   const table = new PixiTable();
   let controller: MatchController | null = null;
+  let observer: ResizeObserver | null = null;
 
   function toVictory(next: PlayerViewState): VictoryInfo {
     const winner = next.players.find((player) => player.id === next.winnerPlayerId);
@@ -43,57 +46,90 @@
     };
   }
 
+  function applyMeasuredLayout(nextView: PlayerViewState | null = view): void {
+    if (!stage || !nextView) return;
+    const rect = stage.getBoundingClientRect();
+    if (rect.width < 1 || rect.height < 1) return;
+    const next = computeTableLayout({
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+      players: nextView.players,
+      humanPlayerId: nextView.viewerId,
+      dealerPlayerId: nextView.dealerPlayerId,
+    });
+    layout = next;
+    table.applyLayout(next);
+  }
+
+  function scheduleLayout(): void {
+    cancelAnimationFrame(resizeFrame);
+    resizeFrame = requestAnimationFrame(() => applyMeasuredLayout());
+  }
+
   onMount(() => {
-    const onResize = (): void => table.resize();
-    window.addEventListener("resize", onResize);
+    observer = new ResizeObserver(scheduleLayout);
+    if (stage) observer.observe(stage);
     void (async () => {
       await unlockAudio();
-      if (!host) {
-        return;
-      }
+      if (!host) return;
       await table.mount(host);
       const match = new MatchController(setup, table, {
         onView: (next) => {
           view = next;
-          if (controller) {
-            locked = controller.inputLocked;
-            selectedIds = [...controller.selectedIds];
-          }
+          locked = match.inputLocked;
+          selectedIds = [...match.selectedIds];
+          applyMeasuredLayout(next);
         },
         onEnded: (next) => {
           victory = toVictory(next);
           view = next;
         },
+        onAnnouncement: (message) => {
+          eventAnnouncement = message;
+        },
       });
       controller = match;
       await match.start();
     })();
-    return () => window.removeEventListener("resize", onResize);
   });
 
   onDestroy(() => {
+    cancelAnimationFrame(resizeFrame);
+    observer?.disconnect();
     controller?.destroy();
     table.destroy();
   });
 
-  function requestLeave(): void {
-    leaving = true;
-  }
-
   const leadSuit = $derived(view?.currentTrick?.leadSuit ?? null);
-  const leadCard = $derived(view?.currentTrick?.plays[0]?.card ?? null);
   const showLeadPlaque = $derived(view?.phase === "TRICK_PLAY");
+  const turnName = $derived(view?.players.find((player) => player.id === view?.currentActorId)?.name ?? "la mesa");
+  const liveMessage = $derived(view
+    ? `Mano ${view.handNumber}. Turno de ${turnName}. ${view.trumpSuit ? `Triunfo ${view.trumpSuit.toLowerCase()}.` : ""} ${view.players.map((player) => `${player.name}: ${player.score}`).join(", ")}`
+    : "Preparando la mesa");
 </script>
 
 <section class="table-screen">
-  <GameHud {view} onMenu={requestLeave} />
-  <div class="table-host" bind:this={host}></div>
-  <div class="suit-reminders">
-    {#if showLeadPlaque}
-      <SuitPlaque kicker="Salida" ariaName="Palo de salida" suit={leadSuit} card={leadCard} />
-    {/if}
-    {#if view?.trumpSuit}
-      <SuitPlaque kicker="Triunfo" ariaName="Triunfo" suit={view.trumpSuit} card={view.revealedTrumpCard ?? null} />
+  <GameHud {view} onMenu={() => (leaving = true)} />
+  <div class="table-stage" bind:this={stage} data-viewport-mode={layout?.mode ?? "pending"}>
+    <div class="table-host" bind:this={host}></div>
+    {#if view && layout}
+      <SeatHudOverlay {view} {layout} />
+      <div class="suit-reminders" style:left={`${layout.suitAnchor.x}px`} style:top={`${layout.suitAnchor.y}px`}>
+        {#if showLeadPlaque}
+          <SuitPlaque kicker="Salida" ariaName="Palo de salida" suit={leadSuit} />
+        {/if}
+        {#if view.trumpSuit}
+          <SuitPlaque kicker="Triunfo" ariaName="Triunfo" suit={view.trumpSuit} />
+        {/if}
+      </div>
+      <ContextualHints {view} {layout} />
+      <AccessibleHand
+        hand={view.hand}
+        {selectedIds}
+        disabled={locked}
+        onActivate={(cardId) => controller?.activateCard(cardId)}
+        onFocus={(cardId) => controller?.focusCard(cardId)}
+      />
     {/if}
   </div>
   <ActionBar
@@ -103,13 +139,14 @@
     onPass={() => controller?.pass()}
     onConfirm={() => controller?.confirmDecision()}
   />
-  <ContextualHints {view} />
+  <p class="sr-only" aria-live="polite" aria-atomic="true">{liveMessage} {eventAnnouncement}</p>
 </section>
 
 {#if leaving}
-  <div class="overlay">
+  <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="leave-title">
     <div class="screen-card stack">
-      <p class="hint">¿Salir de la partida?</p>
+      <h2 id="leave-title">¿Salir de la partida?</h2>
+      <p class="hint">La partida actual no se guarda.</p>
       <button class="btn btn-primary" type="button" onclick={onMenu}>Salir al menú</button>
       <button class="btn btn-ghost" type="button" onclick={() => (leaving = false)}>Seguir jugando</button>
     </div>

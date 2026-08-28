@@ -106,17 +106,41 @@ Este archivo registra decisiones durables. No hace falta crear un ADR separado p
 
 **Razón:** el feedback de aceptación de la Fase 2 pidió dejar la mesa rectangular, reforzar quién reparte y no mezclar stock con las cartas de la vuelta.
 
-## D-022 — Baraja española de atlas CC BY-SA, empaquetada en el cliente
+## D-022 — Caras españolas de atlas CC BY-SA, empaquetadas en el cliente
 
-**Decisión:** los naipes 1–12 de cada palo y el dorso se recortan de `spanish-deck-atlas.png` (Baraja española completa, Wikimedia Commons, CC BY-SA 3.0, autor Basquetteur). El compositor no genera palos ni figuras. No hay hotlink: el PNG viaja en el build. La carta en blanco del atlas no se usa.
+**Decisión:** las caras 1–12 de cada palo se recortan de `spanish-deck-atlas.png` (Baraja española completa, Wikimedia Commons, CC BY-SA 3.0, autor Basquetteur). El dorso es original, se compone en canvas con patrón verde/crema y mosca mínima. No hay hotlink: el PNG viaja en el build. La carta en blanco y el dorso del atlas no se usan.
 
 **Razón:** el set generado internamente no tenía el aspecto de baraja española conocida. Este atlas es el vocabulario visual habitual, con licencia explícita y atribución.
 
-## D-023 — Props de bodegón diferidos
+## D-023 — Decoración subordinada al layout
 
-**Decisión:** el vaso y el anotador no se renderizan en la mesa hasta cerrar layout, legibilidad de cartas y HUD. Los PNG locales quedan en el repo para una pasada de decoración posterior. No se construyen con HTML.
+**Decisión:** el fondo editorial contiene sólo objetos periféricos genéricos y ninguna silla fija. El layout puede ocultar habitación y props antes que cartas/HUD. La cantidad de asientos nunca se codifica en el arte.
 
 **Razón:** primero hay que dejar estable el gameplay y la composición; la decoración no debe competir con la mano, el mazo ni el triunfo.
+
+## D-024 — Layout responsive compartido
+
+**Decisión:** `computeTableLayout(input)` es la única fuente de geometría para Pixi y HUD Svelte. Expone viewport CSS, safe areas, mesa, asientos, mano, stock, triunfo y anchors DOM en cinco modos cerrados.
+
+**Razón:** elimina drift entre canvas/DOM y permite que 3, 4 y 5 jugadores sobrevivan resize y portrait sin reglas CSS paralelas.
+
+## D-025 — Frontera HUD/Pixi y accesibilidad de mano
+
+**Decisión:** Pixi presenta mesa, cartas, manos, stock, bazas, fondo y efectos. Svelte presenta placas, turno, palos, acciones, ayudas y un grupo DOM accesible sincronizado con la mano visual.
+
+**Razón:** el gameplay conserva riqueza gráfica sin convertir sprites en la única interfaz disponible para teclado y tecnologías de asistencia.
+
+## D-026 — Timeline cancelable, lógica primero
+
+**Decisión:** toda secuenciación visual pasa por `PresentationTimeline`, con `sequence`, `parallel`, `stagger`, waits cancelables y `AbortSignal`. Los eventos ya fueron resueltos antes de animarse y `sync(PlayerViewState)` siempre puede reconstruir la escena.
+
+**Razón:** salir o reiniciar no debe dejar timers, RAF, audio ni callbacks pendientes; una animación nunca gobierna reglas.
+
+## D-027 — Assets derivados y buses de audio
+
+**Decisión:** los originales se preservan y `scripts/prepare-assets.py` genera WebP/PDF runtime sin destruir fuentes. El audio usa buses general, efectos y ambiente, migra `{ muted, volume }` y mezcla foley CC0 local con fallback sintetizado.
+
+**Razón:** builds reproducibles, descarga controlada y preferencias de audio útiles sin sumar música continua.
 
 ## Cómo agregar una decisión
 

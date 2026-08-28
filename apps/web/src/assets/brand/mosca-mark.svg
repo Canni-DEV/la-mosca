@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" role="img" aria-label="Mosca">
+  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="32" cy="27" rx="7" ry="12" fill="currentColor" stroke="none"/>
+    <path d="M28 20C21 6 7 7 10 20c2 8 11 8 18 6M36 20C43 6 57 7 54 20c-2 8-11 8-18 6" stroke-width="3"/>
+    <path d="M27 27 16 33M37 27l11 6M27 34l-9 8M37 34l9 8M29 17l-5-8M35 17l5-8" stroke-width="2.5"/>
+  </g>
+</svg>
