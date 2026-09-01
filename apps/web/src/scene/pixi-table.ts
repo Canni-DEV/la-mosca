@@ -243,10 +243,10 @@ export class PixiTable {
         await this.animatePlay(event.playerId, event.cardId, view);
         return;
       case "PalitoDetected":
-        this.handlers.onAnnounce?.("Palito. La jugada suma 50 puntos.");
+        this.handlers.onAnnounce?.("¡Saltaste el palito! La jugada suma 50 puntos.");
         audioMixer.play("palito");
         await this.shake();
-        await this.flashBanner("PALITO", 0xf2d08a, 520);
+        await this.flashBanner("¡SALTASTE EL PALITO!", 0xf2d08a, 520);
         return;
       case "ScoreChanged":
         this.handlers.onAnnounce?.(`${event.delta > 0 ? "+" : ""}${event.delta} puntos.`);
@@ -561,6 +561,17 @@ export class PixiTable {
       counts.set(event.playerId, already + 1);
       const faceUp = event.playerId === view.viewerId;
       const key = faceUp ? cardKey(event.cardId) : hiddenKey(event.playerId, already);
+      const fan = fanOffset(already, 5, faceUp ? layout.humanCardWidth * layout.fanSpacing : layout.cardWidth * 0.2);
+      const target = {
+        x: seat.hand.x + fan.x,
+        y: seat.hand.y + fan.y,
+        rotation: faceUp ? fan.rotation : seat.rotation,
+      };
+      return { event, dealIndex, faceUp, key, target };
+    }).filter((item): item is NonNullable<typeof item> => item !== null);
+    await Promise.all(prepared.map(async ({ event, dealIndex, faceUp, key, target }) => {
+      await wait(dealIndex * 95, this.animationAbort.signal);
+      if (this.animationAbort.signal.aborted) return;
       const sprite = this.ensureCard(
         key,
         faceUp ? layout.humanCardWidth : layout.cardWidth * 0.48,
@@ -572,17 +583,6 @@ export class PixiTable {
       sprite.rotation = 0;
       sprite.alpha = 1;
       sprite.zIndex = 80;
-      const fan = fanOffset(already, 5, faceUp ? layout.humanCardWidth * layout.fanSpacing : layout.cardWidth * 0.2);
-      const target = {
-        x: seat.hand.x + fan.x,
-        y: seat.hand.y + fan.y,
-        rotation: faceUp ? fan.rotation : seat.rotation,
-      };
-      return { event, dealIndex, faceUp, sprite, target };
-    }).filter((item): item is NonNullable<typeof item> => item !== null);
-    await Promise.all(prepared.map(async ({ event, dealIndex, faceUp, sprite, target }) => {
-      await wait(dealIndex * 95, this.animationAbort.signal);
-      if (this.animationAbort.signal.aborted) return;
       audioMixer.play("deal");
       await this.moveSprite(sprite, target, 240);
       if (faceUp && this.canTouch(sprite)) sprite.reveal(event.cardId);

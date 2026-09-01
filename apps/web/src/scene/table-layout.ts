@@ -140,11 +140,12 @@ export function computeTableLayout(input: TableLayoutInput): TableLayout {
       y: center.y + (rim.y - center.y) * (portrait ? 0.86 : 1),
     };
     const handDist = cardHeight * (portrait ? 0.08 : 0.15);
+    const hudInset = portrait ? 4 : cardWidth * 0.28;
     const label = isHuman
       ? { x: center.x, y: handTop - (portrait ? 24 : 38) }
       : clampPoint({
-          x: origin.x - radial.x * (portrait ? 28 : cardWidth * 0.28),
-          y: origin.y - radial.y * (portrait ? 20 : 18) + 4,
+          x: origin.x - radial.x * hudInset,
+          y: origin.y - radial.y * (portrait ? 4 : 18) + 4,
         }, portrait ? 52 : 76, portrait ? 34 : 44, width, height);
     return {
       id: player.id,

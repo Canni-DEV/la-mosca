@@ -56,6 +56,17 @@ describe("layoutTable", () => {
     }
   });
 
+  it("keeps the two upper tickets separated at the 360px portrait minimum", () => {
+    const layout = layoutTable(360, 526, five, "p1", "p1");
+    const upper = layout.seats
+      .filter((seat) => !seat.isHuman)
+      .sort((left, right) => left.hud.y - right.hud.y)
+      .slice(0, 2)
+      .sort((left, right) => left.hud.x - right.hud.x);
+
+    expect(upper[1]!.hud.x - upper[0]!.hud.x).toBeGreaterThanOrEqual(104);
+  });
+
   it("puts stock and public trump to the dealer right, not in the trick center", () => {
     const layout = layoutTable(1280, 800, four, "p1", "p1");
     const dealer = layout.seats[0]!;
