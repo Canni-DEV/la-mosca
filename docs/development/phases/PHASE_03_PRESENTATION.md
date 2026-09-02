@@ -1,8 +1,8 @@
 # Fase 3R — Professional Presentation Refactor
 
-**Estado:** `ACCEPTED` el 1 de septiembre de 2026.
+**Estado:** `IN_PROGRESS` — consolidación visual reabierta el 1 de septiembre de 2026.
 
-La implementación cerrada de esta fase incluye el layout compartido Pixi/Svelte, los cinco modos responsive, la mano accesible por teclado, timeline cancelable, mixer de tres buses, sistema artístico editorial y coherencia del shell completo. La aceptación manual se completó en el navegador local y sobre el build productivo. La Fase 4 continúa bloqueada hasta aprobación explícita.
+La implementación funcional de esta fase incluye el layout compartido Pixi/Svelte, los cinco modos responsive, la mano accesible por teclado, timeline cancelable, mixer de tres buses y sistema artístico editorial. La aceptación visual se reabrió porque el fondo y la superficie Pixi muestran dos mesas incompatibles. La Fase 4 continúa bloqueada hasta una nueva aprobación explícita.
 
 ## Precondición
 

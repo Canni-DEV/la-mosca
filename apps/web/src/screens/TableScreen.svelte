@@ -12,7 +12,7 @@
   import { MatchController, unlockAudio } from "../game/match-controller.ts";
   import { HUMAN_PLAYER_ID } from "../game/LocalGameSession.ts";
   import { PixiTable } from "../scene/pixi-table.ts";
-  import { computeTableLayout, type TableLayout } from "../scene/table-layout.ts";
+  import { computeTableLayout, type SafeInsets, type TableLayout } from "../scene/table-layout.ts";
 
   let { setup, onMenu, onNewGame, onRematch }: {
     setup: MatchSetup;
@@ -23,6 +23,8 @@
 
   let stage = $state<HTMLDivElement | null>(null);
   let host = $state<HTMLDivElement | null>(null);
+  let hudShell = $state<HTMLDivElement | null>(null);
+  let actionShell = $state<HTMLDivElement | null>(null);
   let view = $state<PlayerViewState | null>(null);
   let layout = $state<TableLayout | null>(null);
   let locked = $state(true);
@@ -50,12 +52,22 @@
     if (!stage || !nextView) return;
     const rect = stage.getBoundingClientRect();
     if (rect.width < 1 || rect.height < 1) return;
+    const safeInsets: Partial<SafeInsets> = {};
+    if (hudShell) {
+      const hudRect = hudShell.getBoundingClientRect();
+      safeInsets.top = Math.max(8, Math.ceil(hudRect.bottom - rect.top + 6));
+    }
+    if (actionShell) {
+      const actionRect = actionShell.getBoundingClientRect();
+      safeInsets.bottom = Math.max(8, Math.ceil(rect.bottom - actionRect.top + 6));
+    }
     const next = computeTableLayout({
       width: Math.round(rect.width),
       height: Math.round(rect.height),
       players: nextView.players,
       humanPlayerId: nextView.viewerId,
       dealerPlayerId: nextView.dealerPlayerId,
+      safeInsets,
     });
     layout = next;
     table.applyLayout(next);
@@ -69,6 +81,8 @@
   onMount(() => {
     observer = new ResizeObserver(scheduleLayout);
     if (stage) observer.observe(stage);
+    if (hudShell) observer.observe(hudShell);
+    if (actionShell) observer.observe(actionShell);
     void (async () => {
       await unlockAudio();
       if (!host) return;
@@ -109,7 +123,6 @@
 </script>
 
 <section class="table-screen">
-  <GameHud {view} onMenu={() => (leaving = true)} />
   <div class="table-stage" bind:this={stage} data-viewport-mode={layout?.mode ?? "pending"}>
     <div class="table-host" bind:this={host}></div>
     {#if view && layout}
@@ -132,13 +145,18 @@
       />
     {/if}
   </div>
-  <ActionBar
-    {view}
-    {locked}
-    {selectedIds}
-    onPass={() => controller?.pass()}
-    onConfirm={() => controller?.confirmDecision()}
-  />
+  <div class="game-hud-shell" bind:this={hudShell}>
+    <GameHud {view} onMenu={() => (leaving = true)} />
+  </div>
+  <div class="action-bar-shell" bind:this={actionShell}>
+    <ActionBar
+      {view}
+      {locked}
+      {selectedIds}
+      onPass={() => controller?.pass()}
+      onConfirm={() => controller?.confirmDecision()}
+    />
+  </div>
   <p class="sr-only" aria-live="polite" aria-atomic="true">{liveMessage} {eventAnnouncement}</p>
 </section>
 

@@ -46,6 +46,9 @@ def main() -> None:
         for page in pages:
             page.close()
     webp(ASSETS / "table" / "bodegon-editorial.png", ASSETS / "table" / "bodegon-editorial.webp", max_width=1664, quality=84)
+    table = ASSETS / "table"
+    webp(table / "scene-b-wood.png", table / "scene-b-wood.webp", max_width=1254, quality=86)
+    webp(table / "scene-b-surround.png", table / "scene-b-surround.webp", max_width=1536, quality=84)
 
 
 if __name__ == "__main__":

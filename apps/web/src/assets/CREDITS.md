@@ -22,9 +22,11 @@ Ambas se empaquetan localmente desde el repositorio oficial de Google Fonts.
 
 ## Resto de arte
 
-Mesa, fondo de bodegón, vaso genérico y anotador: ilustraciones originales encargadas para el proyecto (generación asistida), empaquetadas en el build.
+Mesa y fondo ambiental de bodegón: ilustraciones originales encargadas para el proyecto (generación asistida), empaquetadas en el build.
 
 El fondo `table/bodegon-editorial.png` es una ilustración original de generación asistida. Su derivado WebP se genera localmente. No contiene marcas, personas ni sillas fijas: los 3–5 asientos pertenecen al layout dinámico.
+
+La escena B usa dos fuentes PNG: una textura de madera sin borde ni iluminación horneados y un marco ambiental cenital sin objetos decorativos. Sus derivados WebP son reproducibles mediante `scripts/prepare-assets.py`.
 
 ## Audio
 
@@ -40,4 +42,3 @@ Ambiente y cues especiales: síntesis local con Web Audio API (`apps/web/src/aud
 
 No hay hotlinks ni descargas remotas en runtime.
 
-El vaso oscuro es un fernet con cola **genérico**, sin etiqueta comercial.

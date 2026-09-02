@@ -54,7 +54,6 @@ export interface TableLayout {
   stockWidth: number;
   stockHeight: number;
   stockRotation: number;
-  props: { roomVisible: boolean; tabletopProps: boolean; maximumCount: number };
 }
 
 export interface TableLayoutInput {
@@ -183,7 +182,6 @@ export function computeTableLayout(input: TableLayoutInput): TableLayout {
     hintAnchor: { x: portrait ? center.x : safeArea.x + safeArea.width - 12, y: portrait ? table.y + table.height * 0.6 : safeArea.y + safeArea.height * 0.72, align: portrait ? "center" : "end", placement: portrait ? "top" : "right", maxWidth: portrait ? Math.min(300, safeArea.width - 24) : 280 },
     suitAnchor: { x: safeArea.x + safeArea.width - 8, y: safeArea.y + 8, align: "end", placement: "top", maxWidth: portrait ? 176 : 260 },
     seats, cardWidth, cardHeight, humanCardWidth, humanCardHeight, fanSpacing, stockWidth, stockHeight, stockRotation: dealer.rotation,
-    props: { roomVisible: !portrait && !landscape, tabletopProps: mode === "desktopWide" || mode === "desktopCompact", maximumCount: mode === "desktopWide" ? 4 : mode === "desktopCompact" ? 2 : 0 },
   };
 }
 

@@ -137,7 +137,7 @@ Este checklist crece con las fases. La especificación de cada fase incluye un s
 - [ ] Mazo y triunfo público a la derecha de quien reparte; el centro solo tiene la baza.
 - [ ] El dealer conserva su 5ª carta en la mano; el triunfo público es otra copia etiquetada.
 - [ ] 10, 11 y 12 se leen como Sota, Caballo y Rey (número grande + figura).
-- [ ] Fernet genérico y anotador son imágenes, no dibujos vectoriales; no tapan HUD ni cartas.
+- [ ] La escena se sostiene con mesa, entorno y luz; no hay objetos decorativos compitiendo con HUD ni cartas.
 - [ ] Los montoncitos de bazas quedan como pilas junto al asiento y no desaparecen.
 - [ ] Palito, Mosca y Chupado tienen feedback visual y sonoro distinto.
 - [ ] Cómo jugar muestra la guía ilustrada (páginas 0–3) con pasaje tipo libro y permite descargar el PDF.
