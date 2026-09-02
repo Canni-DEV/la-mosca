@@ -41,6 +41,21 @@ describe("layoutTable", () => {
     expect(layoutTable(390, 844, four, "p1").mode).toBe("mobilePortrait");
     expect(layoutTable(360, 640, four, "p1").mode).toBe("mobilePortrait");
   });
+
+  it("honors measured floating-control insets", () => {
+    const layout = computeTableLayout({
+      width: 1280,
+      height: 800,
+      players: five,
+      humanPlayerId: "p1",
+      dealerPlayerId: "p5",
+      safeInsets: { top: 72, right: 18, bottom: 92, left: 18 },
+    });
+
+    expect(layout.safeArea).toEqual({ x: 18, y: 72, width: 1244, height: 636 });
+    expect(layout.table.y).toBeGreaterThanOrEqual(layout.safeArea.y);
+    expect(layout.seats[0]!.hand.y + layout.humanCardHeight * 0.52).toBeLessThanOrEqual(708);
+  });
   it("sits the human at the bottom and spaces 3, 4 and 5 players evenly", () => {
     for (const players of [three, four, five]) {
       const layout = layoutTable(1280, 800, players, "p1", "p1");

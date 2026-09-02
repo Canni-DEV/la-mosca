@@ -1,9 +1,9 @@
 # Estado del proyecto
 
 **Proyecto:** La Mosca  
-**Estado actual:** Fase 3R aceptada manualmente el 1 de septiembre de 2026
-**Fase habilitada:** ninguna; la Fase 4 sigue bloqueada hasta aprobación explícita
-**Próxima acción:** esperar autorización del usuario antes de iniciar la Fase 4
+**Estado actual:** Fase 3R en progreso — consolidación visual de mesa, entorno y HUD
+**Fase habilitada:** 3R; la Fase 4 sigue bloqueada hasta aprobación explícita
+**Próxima acción:** resolver la integración artística de la escena y repetir la aceptación manual de Fase 3R
 
 ## Estado por fases
 
@@ -11,7 +11,7 @@
 |---|---|---|
 | 1. Foundation & Rules Engine | ACCEPTED | Monorepo, motor determinístico, protocolo, bot base y playground verificable |
 | 2. Playable MVP | ACCEPTED | Partida completa humano vs bots con mesa funcional |
-| 3R. Professional Presentation Refactor | ACCEPTED | Dirección artística, responsive, accesibilidad, animación y audio profesional |
+| 3R. Professional Presentation Refactor | IN_PROGRESS | Dirección artística, responsive, accesibilidad, animación y audio profesional |
 | 4. Release Candidate | BLOCKED | Hardening, responsive, accesibilidad, performance y GitHub Pages |
 | Multiplayer futuro | NOT IN CURRENT SCOPE | Servidor autoritativo, rooms, view states remotos |
 | Mobile hand/controller | NOT IN CURRENT SCOPE | Celular asociado al jugador como mano/controlador |
@@ -34,7 +34,7 @@ Aceptada manualmente el 23 de agosto de 2026. Gameplay y reglas OK; sin errores 
 - Mesa Pixi jugable, bots, animación base y audio con mute/volumen
 - Palito, Mosca, Chupado y corte de partida al llegar a 0
 
-## Fase 3R — cerrada
+## Fase 3R — reabierta para consolidación visual
 
 Refactor de presentación completado sin modificar `game-core`, commands/events, protocolo ni IA:
 
@@ -47,7 +47,7 @@ Refactor de presentación completado sin modificar `game-core`, commands/events,
 - guía responsive con WebP y PDF derivado de 1,54 MiB, preservando los originales;
 - pantalla visible de Créditos y lenguaje visual unificado en menú, setup, opciones, guía, salida y victoria.
 
-Aceptada manualmente el 1 de septiembre de 2026 en el navegador local y sobre el build productivo.
+La aceptación manual registrada el 1 de septiembre de 2026 queda revocada por una inconsistencia visual de escena: el fondo ilustrado y la superficie renderizada forman dos mesas con perspectiva, borde e iluminación incompatibles. Gameplay, animaciones, tipografía, guía, audio, accesibilidad y responsive previamente validados se mantienen como regresiones protegidas.
 
 - Validación responsive completada en 1920×1080, 1366×768, 1280×800, 1024×768, 844×390, 390×844 y 360×640 con 3, 4 y 5 jugadores.
 - Se corrigieron el alto mínimo que recortaba mobile landscape, la superposición de tickets en 360 px y targets menores a 44 px.
@@ -56,6 +56,13 @@ Aceptada manualmente el 1 de septiembre de 2026 en el navegador local y sobre el
 - Movimiento reducido cubierto por la implementación y por un test determinístico: vuelos limitados a 80 ms y shake desactivado.
 - Cinco ciclos de salida durante reparto liberaron canvas, timeline y presentación sin residuos visibles.
 - Verificación automática final: 68 tests verdes, TypeScript/Svelte sin errores y build productivo verde.
+
+Bloqueo actual para volver a aceptación manual:
+
+- una sola mesa física y una sola fuente de iluminación;
+- entorno cenital coherente con la superficie jugable;
+- entorno limpio, sin objetos decorativos que compitan con el gameplay;
+- HUD y acciones integrados como controles flotantes, sin barras web continuas.
 
 ## Regla de avance
 
